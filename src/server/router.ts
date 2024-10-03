@@ -7,6 +7,7 @@ export const t = initTRPC.create();
 
 export const appRouter = t.router({
 	getToday: t.procedure.query(async () => {
+		console.log("Getting plan for today");
 		const today = new Date();
 		today.setHours(0, 0, 0, 0); // Set time to midnight
 		const plan = await mongoDBService.getPlanByDay(today);
