@@ -1,8 +1,73 @@
+:root {
+  --primary-color: #FFD700; /* Yellow */
+  --accent-color: #FF4136; /* Red */
+  --background-color: #F5F5F5;
+  --text-color: #333;
+}
+
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  font-family: Arial, sans-serif;
+}
+
 #root {
-  max-width: 1280px;
+  display: flex;
   margin: 0 auto;
+  padding: 0;
+  text-align: left;
+}
+
+.sidebar {
+  width: 200px;
+  background-color: var(--primary-color);
+  padding: 2rem 1rem;
+  height: 100vh;
+}
+
+.sidebar ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.sidebar li {
+  margin-bottom: 1rem;
+}
+
+.sidebar a {
+  color: var(--text-color);
+  text-decoration: none;
+  font-weight: bold;
+  transition: color 0.3s ease;
+}
+
+.sidebar a:hover {
+  color: var(--accent-color);
+}
+
+.main-content {
+  flex-grow: 1;
   padding: 2rem;
-  text-align: center;
+}
+
+h1 {
+  color: var(--accent-color);
+  border-bottom: 2px solid var(--primary-color);
+  padding-bottom: 0.5rem;
+}
+
+button {
+  background-color: var(--primary-color);
+  color: var(--text-color);
+  border: none;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: var(--accent-color);
+  color: white;
 }
 
 .logo {

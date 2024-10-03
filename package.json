@@ -1,22 +1,15 @@
 {
+    "name": "omni-note",
+    "workspaces": [
+        "src/client",
+        "src/server"
+    ],
     "scripts": {
-        "build": "tsc",
-        "dev:server": "bun --watch src/server/server.ts",
-        "dev:client": "bun --cwd ./src/client/ dev",
+        "dev:server": "bun --cwd src/server dev",
+        "dev:client": "bun --cwd src/client dev",
         "dev": "run-p dev:* --print-label"
     },
     "dependencies": {
-        "@trpc/client": "^11.0.0-rc.553",
-        "@trpc/server": "^11.0.0-rc.553",
-        "cors": "^2.8.5",
-        "dotenv": "^16.4.5",
-        "mongodb": "^6.9.0",
-        "zod": "^3.23.8"
-    },
-    "devDependencies": {
-        "@types/cors": "^2.8.17",
-        "typescript": "^5.6.2",
-        "vite": "^5.4.8",
-        "wait-port": "^1.1.0"
+        "npm-run-all": "^4.1.5"
     }
 }

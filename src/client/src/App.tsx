@@ -30,15 +30,24 @@ function App() {
 
   return (
     <>
-      <h1>Today's Plan</h1>
-      {todaysPlan ? (
-        <PlanEditor initialPlan={todaysPlan.text} planId={todaysPlan.id} />
-      ) : (
-        <>
-          <p>No plan for today yet.</p>
-          <button onClick={handleCreatePlan}>Create Default Plan</button>
-        </>
-      )}
+      <div className="sidebar">
+        <ul>
+          <li><a href="#">Today</a></li>
+          <li><a href="#">Past Days</a></li>
+          <li><a href="#">All Todos</a></li>
+        </ul>
+      </div>
+      <div className="main-content">
+        <h1>Today's Plan</h1>
+        {todaysPlan ? (
+          <PlanEditor initialPlan={todaysPlan.text} planId={todaysPlan.id} />
+        ) : (
+          <>
+            <p>No plan for today yet.</p>
+            <button onClick={handleCreatePlan}>Make Today's Note</button>
+          </>
+        )}
+      </div>
     </>
   )
 }

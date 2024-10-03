@@ -1,7 +1,7 @@
 import { initTRPC } from '@trpc/server';
 import { z } from 'zod';
-import { mongoDBService } from './mongodb-service';
-import { Plan } from '../types/types';
+import { mongoDBService } from './mongodb-service.ts';
+import { Plan } from '../types/types.ts';
 
 export const t = initTRPC.create();
 

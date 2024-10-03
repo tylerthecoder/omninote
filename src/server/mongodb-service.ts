@@ -1,6 +1,6 @@
 import { MongoClient, Collection, ObjectId } from 'mongodb';
 import dotenv from 'dotenv';
-import { Plan } from '../types/types';
+import { Plan } from '../types/types.ts';
 
 dotenv.config();
 
@@ -16,7 +16,7 @@ class MongoDBService {
 
   constructor() {
     const uri = process.env.DB_URI;
-    this.db = process.env.MONGODB_DB_NAME || 'tylernote';
+    this.db = 'tylernote';
 
     if (!uri) {
       throw new Error('MONGODB_URI is not defined in the environment variables');
