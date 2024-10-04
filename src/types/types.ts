@@ -1,14 +1,27 @@
-
 export type Plan = {
     id: string;
-
-    // The day the plan corresponds to.
-    day: Date;
-    // The time the plan was created at.
-    createdAt: Date;
-    // The time the plan was last updated at.
-    updatedAt: Date;
+    day: string;
+    createdAt: string;
+    updatedAt: string;
     text: string;
+}
+
+export type Todo = {
+    id: string;
+    text: string;
+    completed: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export type BuyListItem = {
+    id: string;
+    text: string;
+    completed: boolean;
+    url?: string;
+    notes?: string;
+    createdAt: string;
+    updatedAt: string;
 }
 
 

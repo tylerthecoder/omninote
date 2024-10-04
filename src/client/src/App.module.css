@@ -1,23 +1,4 @@
-:root {
-  --primary-color: #FFD700; /* Yellow */
-  --accent-color: #FF4136; /* Red */
-  --background-color: #F5F5F5;
-  --text-color: #333;
-}
-
-body {
-  background-color: var(--background-color);
-  color: var(--text-color);
-  font-family: Arial, sans-serif;
-}
-
-html, body, #root {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-#root {
+.root {
   display: flex;
   height: 100vh;
   overflow: hidden;
@@ -30,29 +11,30 @@ html, body, #root {
   height: 100%;
   box-sizing: border-box;
   overflow-y: auto;
+  margin-right: 1rem; /* Add margin to the right of the sidebar */
 }
 
-.sidebar ul {
+.sidebarList {
   list-style-type: none;
   padding: 0;
 }
 
-.sidebar li {
+.sidebarItem {
   margin-bottom: 1rem;
 }
 
-.sidebar a {
+.sidebarLink {
   color: var(--text-color);
   text-decoration: none;
   font-weight: bold;
   transition: color 0.3s ease;
 }
 
-.sidebar a:hover {
+.sidebarLink:hover {
   color: var(--accent-color);
 }
 
-.main-content {
+.mainContent {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
@@ -60,29 +42,9 @@ html, body, #root {
   overflow: hidden;
 }
 
-.main-content h1 {
+.mainContentTitle {
   margin-top: 0;
   padding: 1rem;
-}
-
-h1 {
-  color: var(--accent-color);
-  border-bottom: 2px solid var(--primary-color);
-  padding-bottom: 0.5rem;
-}
-
-button {
-  background-color: var(--primary-color);
-  color: var(--text-color);
-  border: none;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-button:hover {
-  background-color: var(--accent-color);
-  color: white;
 }
 
 .logo {
@@ -91,10 +53,12 @@ button:hover {
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
-.logo.react:hover {
+
+.logoReact:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
 
@@ -117,17 +81,17 @@ button:hover {
   padding: 2em;
 }
 
-.read-the-docs {
+.readTheDocs {
   color: #888;
 }
 
-.app-container {
+.appContainer {
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-.editor-wrapper {
+.editorWrapper {
   flex-grow: 1;
   overflow: hidden;
   display: flex;

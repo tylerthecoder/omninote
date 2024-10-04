@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Debouncer } from './utils';
-import { LexicalComposer } from '@lexical/react/LexicalComposer';
+import { InitialConfigType, LexicalComposer } from '@lexical/react/LexicalComposer';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
@@ -22,8 +22,9 @@ import { AutoLinkNode, LinkNode } from "@lexical/link";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
-import { EditorState } from 'lexical';
+import { EditorState, EditorThemeClasses } from 'lexical';
 import { trpc } from './trpc';
+import styles from './plan-editor.module.css';
 
 // import ListMaxIndentLevelPlugin from "./lexical-plugins/ListMaxIndentLevelPlugin";
 // import CodeHighlightPlugin from "./lexical-plugins/CodeHighlightPlugin";
@@ -51,71 +52,60 @@ const prettySyncStatus = (status: SyncStatus) => {
   }
 }
 
-const theme = {
-  ltr: "ltr",
-  rtl: "rtl",
-  placeholder: "editor-placeholder",
-  paragraph: "editor-paragraph",
-  quote: "editor-quote",
-  heading: {
-    h1: "editor-heading-h1",
-    h2: "editor-heading-h2",
-    h3: "editor-heading-h3",
-    h4: "editor-heading-h4",
-    h5: "editor-heading-h5"
-  },
+const theme: EditorThemeClasses = {
+  ltr: styles.ltr,
+  rtl: styles.rtl,
+  placeholder: styles.editorPlaceholder,
+  // Remove paragraph, quote, and heading styles
   list: {
     nested: {
-      listitem: "editor-nested-listitem"
+      listitem: styles.editorNestedListitem
     },
-    ol: "editor-list-ol",
-    ul: "editor-list-ul",
-    listitem: "editor-listitem"
+    ol: styles.editorListOl,
+    ul: styles.editorListUl,
+    listitem: styles.editorListitem
   },
-  image: "editor-image",
-  link: "editor-link",
+  link: styles.editorLink,
   text: {
-    bold: "editor-text-bold",
-    italic: "editor-text-italic",
-    overflowed: "editor-text-overflowed",
-    hashtag: "editor-text-hashtag",
-    underline: "editor-text-underline",
-    strikethrough: "editor-text-strikethrough",
-    underlineStrikethrough: "editor-text-underlineStrikethrough",
-    code: "editor-text-code"
+    bold: styles.editorTextBold,
+    italic: styles.editorTextItalic,
+    underline: styles.editorTextUnderline,
+    strikethrough: styles.editorTextStrikethrough,
+    underlineStrikethrough: styles.editorTextUnderlineStrikethrough,
+    code: styles.editorTextCode
   },
-  code: "editor-code",
+  code: styles.editorCode,
   codeHighlight: {
-    atrule: "editor-tokenAttr",
-    attr: "editor-tokenAttr",
-    boolean: "editor-tokenProperty",
-    builtin: "editor-tokenSelector",
-    cdata: "editor-tokenComment",
-    char: "editor-tokenSelector",
-    class: "editor-tokenFunction",
-    "class-name": "editor-tokenFunction",
-    comment: "editor-tokenComment",
-    constant: "editor-tokenProperty",
-    deleted: "editor-tokenProperty",
-    doctype: "editor-tokenComment",
-    entity: "editor-tokenOperator",
-    function: "editor-tokenFunction",
-    important: "editor-tokenVariable",
-    inserted: "editor-tokenSelector",
-    keyword: "editor-tokenAttr",
-    namespace: "editor-tokenVariable",
-    number: "editor-tokenProperty",
-    operator: "editor-tokenOperator",
-    prolog: "editor-tokenComment",
-    property: "editor-tokenProperty",
-    punctuation: "editor-tokenPunctuation",
-    regex: "editor-tokenVariable",
-    selector: "editor-tokenSelector",
-    string: "editor-tokenSelector",
-    symbol: "editor-tokenProperty",
-    tag: "editor-tokenProperty",
-    url: "editor-tokenOperator",
-    variable: "editor-tokenVariable"
+    atrule: styles.editorTokenAttr,
+    attr: styles.editorTokenAttr,
+    boolean: styles.editorTokenProperty,
+    builtin: styles.editorTokenSelector,
+    cdata: styles.editorTokenComment,
+    char: styles.editorTokenSelector,
+    class: styles.editorTokenFunction,
+    "class-name": styles.editorTokenFunction,
+    comment: styles.editorTokenComment,
+    constant: styles.editorTokenProperty,
+    deleted: styles.editorTokenProperty,
+    doctype: styles.editorTokenComment,
+    entity: styles.editorTokenOperator,
+    function: styles.editorTokenFunction,
+    important: styles.editorTokenVariable,
+    inserted: styles.editorTokenSelector,
+    keyword: styles.editorTokenAttr,
+    namespace: styles.editorTokenVariable,
+    number: styles.editorTokenProperty,
+    operator: styles.editorTokenOperator,
+    prolog: styles.editorTokenComment,
+    property: styles.editorTokenProperty,
+    punctuation: styles.editorTokenPunctuation,
+    regex: styles.editorTokenVariable,
+    selector: styles.editorTokenSelector,
+    string: styles.editorTokenSelector,
+    symbol: styles.editorTokenProperty,
+    tag: styles.editorTokenProperty,
+    url: styles.editorTokenOperator,
+    variable: styles.editorTokenVariable
   }
 };
 
@@ -162,6 +152,8 @@ export function PlanEditor({ initialPlan, planId }: PlanEditorProps) {
 
   console.log("Here");
 
+  console.log("Styles:", styles);
+
   const handleChange = (editorState: EditorState) => {
     editorState.read(() => {
       console.log("Change detected", editorState);
@@ -177,7 +169,7 @@ export function PlanEditor({ initialPlan, planId }: PlanEditorProps) {
     });
   };
 
-  const editorConfig = {
+  const editorConfig: InitialConfigType = {
     namespace: 'PlanEditor',
     // The editor theme
     theme,
@@ -202,30 +194,30 @@ export function PlanEditor({ initialPlan, planId }: PlanEditorProps) {
   };
 
   return (
-    <div>
+    <div style={{ height: '100%' }}>
       <LexicalComposer initialConfig={editorConfig}>
-      <div className="editor-container">
-        <ToolbarPlugin />
-        <div className="editor-inner">
-          <RichTextPlugin
-            contentEditable={<ContentEditable className="editor-input" />}
-            placeholder={<div>Enter your plan...</div>}
-            ErrorBoundary={LexicalErrorBoundary}
-          />
-          <MyCustomAutoFocusPlugin />
-          <OnChangePlugin onChange={handleChange} />
-          <HistoryPlugin />
-          <AutoFocusPlugin />
-          <LoadDataPlugin initialPlan={plan} />
-          {/* <CodeHighlightPlugin /> */}
-          <ListPlugin />
-          <LinkPlugin />
-          {/* <AutoLinkPlugin /> */}
-          {/* <ListMaxIndentLevelPlugin maxDepth={7} /> */}
-          <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+        <div className={styles.editorContainer}>
+          <ToolbarPlugin />
+          <div className={styles.editorInner}>
+            <RichTextPlugin
+              contentEditable={<ContentEditable className="editor-input" />}
+              placeholder={<div>Enter your plan...</div>}
+              ErrorBoundary={LexicalErrorBoundary}
+            />
+            <MyCustomAutoFocusPlugin />
+            <OnChangePlugin onChange={handleChange} />
+            <HistoryPlugin />
+            <AutoFocusPlugin />
+            <LoadDataPlugin initialPlan={plan} />
+            {/* <CodeHighlightPlugin /> */}
+            <ListPlugin />
+            <LinkPlugin />
+            {/* <AutoLinkPlugin /> */}
+            {/* <ListMaxIndentLevelPlugin maxDepth={7} /> */}
+            <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+          </div>
         </div>
-      </div>
-    </LexicalComposer>
+      </LexicalComposer>
       <p>Status: {prettySyncStatus(syncStatus)}</p>
     </div>
   );

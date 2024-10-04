@@ -1,18 +1,21 @@
 import { MongoClient, Collection, ObjectId } from 'mongodb';
 import dotenv from 'dotenv';
-import { Plan } from '../types/types.ts';
+import { Plan, Todo, BuyListItem } from '../types/types.ts';
 
 dotenv.config();
 
 type NoId<T> = Omit<T, 'id'>;
 
-
 const MONGO_COLLECTION_NAME = 'notes';
+const TODO_COLLECTION_NAME = 'todos';
+const BUY_LIST_COLLECTION_NAME = 'buylist';
 
 class MongoDBService {
   private readonly client: MongoClient;
   private readonly db: string;
   private collection?: Collection<NoId<Plan>>;
+  private todoCollection?: Collection<NoId<Todo>>;
+  private buyListCollection?: Collection<NoId<BuyListItem>>;
 
   constructor() {
     const uri = process.env.DB_URI;
@@ -23,7 +26,6 @@ class MongoDBService {
     }
 
     this.client = new MongoClient(uri);
-
   }
 
   async connect(): Promise<void> {
@@ -32,6 +34,8 @@ class MongoDBService {
       console.log('Connected to MongoDB');
       const database = this.client.db(this.db);
       this.collection = database.collection<NoId<Plan>>(MONGO_COLLECTION_NAME);
+      this.todoCollection = database.collection<NoId<Todo>>(TODO_COLLECTION_NAME);
+      this.buyListCollection = database.collection<NoId<BuyListItem>>(BUY_LIST_COLLECTION_NAME);
     } catch (error) {
       console.error('Error connecting to MongoDB:', error);
       throw error;
@@ -41,8 +45,8 @@ class MongoDBService {
   async createPlan(plan: Omit<Plan, 'createdAt' | 'updatedAt' | 'id'>): Promise<Plan> {
     const newPlan: NoId<Plan> = {
       ...plan,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
     const result = await this.getCollection().insertOne(newPlan);
@@ -55,7 +59,7 @@ class MongoDBService {
   }
 
   async getAllPlans(): Promise<Plan[]> {
-    const results = await this.getCollection().find().toArray();
+    const results = await this.getCollection().find().sort({ day: -1 }).toArray();
     return results.map(result => ({ ...result, id: result._id.toString() }));
   }
 
@@ -76,7 +80,7 @@ class MongoDBService {
     const updateDoc = {
       $set: {
         ...update,
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString(),
       },
     };
     const result = await collection.findOneAndUpdate(
@@ -88,6 +92,105 @@ class MongoDBService {
       throw new Error(`Plan with id ${id} not found`);
     }
     return { ...result, id: result._id.toString() };
+  }
+
+  async getAllPastPlans(today: Date): Promise<Plan[]> {
+    const results = await this.getCollection().find({ day: { $lt: today.toISOString() } }).sort({ day: -1 }).toArray();
+    return results.map(result => ({ ...result, id: result._id.toString() }));
+  }
+
+  private getTodoCollection(): Collection<NoId<Todo>> {
+    if (!this.todoCollection) {
+      throw new Error('MongoDB todo collection is not initialized. Did you forget to call connect()?');
+    }
+    return this.todoCollection;
+  }
+
+  async createTodo(todo: Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>): Promise<Todo> {
+    const newTodo: NoId<Todo> = {
+      ...todo,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const result = await this.getTodoCollection().insertOne(newTodo);
+    return { ...newTodo, id: result.insertedId.toString() };
+  }
+
+  async getAllTodos(): Promise<Todo[]> {
+    const results = await this.getTodoCollection().find().toArray();
+    return results.map(result => ({ ...result, id: result._id.toString() }));
+  }
+
+  async updateTodo(id: string, update: Partial<Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>>): Promise<Todo> {
+    const collection = this.getTodoCollection();
+    const updateDoc = {
+      $set: {
+        ...update,
+        updatedAt: new Date().toISOString(),
+      },
+    };
+    const result = await collection.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      updateDoc,
+      { returnDocument: 'after' }
+    );
+    if (!result) {
+      throw new Error(`Todo with id ${id} not found`);
+    }
+    return { ...result, id: result._id.toString() };
+  }
+
+  async deleteTodo(id: string): Promise<boolean> {
+    const result = await this.getTodoCollection().deleteOne({ _id: new ObjectId(id) });
+    return result.deletedCount === 1;
+  }
+
+  private getBuyListCollection(): Collection<NoId<BuyListItem>> {
+    if (!this.buyListCollection) {
+      throw new Error('MongoDB buy list collection is not initialized. Did you forget to call connect()?');
+    }
+    return this.buyListCollection;
+  }
+
+  async createBuyListItem(item: Omit<BuyListItem, 'id' | 'createdAt' | 'updatedAt'>): Promise<BuyListItem> {
+    const newItem: NoId<BuyListItem> = {
+      ...item,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const result = await this.getBuyListCollection().insertOne(newItem);
+    return { ...newItem, id: result.insertedId.toString() };
+  }
+
+  async getAllBuyListItems(): Promise<BuyListItem[]> {
+    const results = await this.getBuyListCollection().find().toArray();
+    return results.map(result => ({ ...result, id: result._id.toString() }));
+  }
+
+  async updateBuyListItem(id: string, update: Partial<Omit<BuyListItem, 'id' | 'createdAt' | 'updatedAt'>>): Promise<BuyListItem> {
+    const collection = this.getBuyListCollection();
+    const updateDoc = {
+      $set: {
+        ...update,
+        updatedAt: new Date().toISOString(),
+      },
+    };
+    const result = await collection.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      updateDoc,
+      { returnDocument: 'after' }
+    );
+    if (!result) {
+      throw new Error(`Buy list item with id ${id} not found`);
+    }
+    return { ...result, id: result._id.toString() };
+  }
+
+  async deleteBuyListItem(id: string): Promise<boolean> {
+    const result = await this.getBuyListCollection().deleteOne({ _id: new ObjectId(id) });
+    return result.deletedCount === 1;
   }
 }
 
