@@ -1,11 +1,39 @@
 import { useState, useEffect } from 'react'
 import { trpc } from './trpc'
-import { PlanEditor } from './plan-editor'
+import { Editor } from './editor/editor'
+import { Debouncer } from './utils'
+
+type SyncStatus = 'not-synced' | 'synced' | 'syncing...' | 'error';
+
+const prettySyncStatus = (status: SyncStatus) => {
+  switch (status) {
+    case 'not-synced':
+      return 'Not synced';
+    case 'synced':
+      return 'Synced';
+    case 'syncing...':
+      return 'Syncing...';
+    case 'error':
+      return 'Error';
+  }
+}
 
 export function Today() {
   const [todaysPlan, setTodaysPlan] = useState<{ id: string, text: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('not-synced')
+  const debouncer = new Debouncer(500)
+
+  useEffect(() => {
+    debouncer.addStartListener(() => setSyncStatus('syncing...'))
+    debouncer.addDoneListener(() => setSyncStatus('synced'))
+    debouncer.addErrorListener(() => setSyncStatus('error'))
+
+    return () => {
+      debouncer.clear()
+    }
+  }, [])
 
   const fetchTodaysPlan = async () => {
     setIsLoading(true)
@@ -36,6 +64,21 @@ export function Today() {
     }
   }
 
+  const handleTextChange = (newText: string) => {
+    if (!todaysPlan) return
+
+    setTodaysPlan(prev => prev ? { ...prev, text: newText } : null)
+    setSyncStatus('not-synced')
+    debouncer.debounce(async () => {
+      try {
+        await trpc.updatePlan.mutate({ id: todaysPlan.id, text: newText })
+      } catch (error) {
+        console.error('Error updating plan:', error)
+        setSyncStatus('error')
+      }
+    })
+  }
+
   return (
     <>
       <h1>Today's Plan</h1>
@@ -44,7 +87,10 @@ export function Today() {
         {isLoading ? (
           <p>Loading...</p>
         ) : todaysPlan ? (
-          <PlanEditor initialPlan={todaysPlan.text} planId={todaysPlan.id} />
+          <>
+            <Editor text={todaysPlan.text} onTextChange={handleTextChange} />
+            <p>Status: {prettySyncStatus(syncStatus)}</p>
+          </>
         ) : (
           <>
             <p>No plan for today yet.</p>

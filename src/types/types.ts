@@ -24,4 +24,14 @@ export type BuyListItem = {
     updatedAt: string;
 }
 
+export type TalkNote = {
+    id: string;
+    title: string;
+    content: string;
+    speaker: string;
+    date: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
 

@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Debouncer } from './utils';
 import { InitialConfigType, LexicalComposer } from '@lexical/react/LexicalComposer';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
@@ -13,7 +12,7 @@ import {
 } from '@lexical/markdown';
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
-import ToolbarPlugin from "./lexical-plugins/ToolbarPlugin";
+import ToolbarPlugin from "../lexical-plugins/ToolbarPlugin";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
 import { ListItemNode, ListNode } from "@lexical/list";
@@ -23,33 +22,15 @@ import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
 import { EditorState, EditorThemeClasses } from 'lexical';
-import { trpc } from './trpc';
-import styles from './plan-editor.module.css';
+import styles from './editor.module.css';
 
 // import ListMaxIndentLevelPlugin from "./lexical-plugins/ListMaxIndentLevelPlugin";
 // import CodeHighlightPlugin from "./lexical-plugins/CodeHighlightPlugin";
 // import AutoLinkPlugin from "./lexical-plugins/AutoLinkPlugin";
 
-interface PlanEditorProps {
-  initialPlan: string;
-  planId: string;
-}
-
-const debouncer = new Debouncer(500);
-
-type SyncStatus = 'not-synced' | 'synced' | 'syncing...' | 'error';
-
-const prettySyncStatus = (status: SyncStatus) => {
-  switch (status) {
-    case 'not-synced':
-      return 'Not synced';
-    case 'synced':
-      return 'Synced';
-    case 'syncing...':
-      return 'Syncing...';
-    case 'error':
-      return 'Error';
-  }
+interface EditorProps {
+  text: string;
+  onTextChange: (text: string) => void;
 }
 
 const theme: EditorThemeClasses = {
@@ -119,65 +100,41 @@ function MyCustomAutoFocusPlugin() {
   return null;
 }
 
-function LoadDataPlugin({ initialPlan }: { initialPlan: string }) {
+function LoadDataPlugin({ initialText }: { initialText: string }) {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
-
     editor.update(() => {
-      $convertFromMarkdownString(initialPlan, TRANSFORMERS);
-    });
+      const currentText = $convertToMarkdownString(TRANSFORMERS);
 
-  }, [editor]);
+      if (currentText !== initialText) {
+        console.log("Loading data", initialText);
+        $convertFromMarkdownString(initialText, TRANSFORMERS);
+      }
+    });
+  }, [editor, initialText]);
 
   return null;
 }
 
-export function PlanEditor({ initialPlan, planId }: PlanEditorProps) {
-  console.log("Initial plan:", initialPlan);
-  const [plan, setPlan] = useState(initialPlan);
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>('not-synced');
+export function Editor({ text, onTextChange }: EditorProps) {
+  const [initialText, setInitialText] = useState(text);
 
-  useEffect(() => {
-    debouncer.addStartListener(() => {
-      setSyncStatus('syncing...');
-    });
-    debouncer.addDoneListener(() => {
-      setSyncStatus('synced');
-    });
-    debouncer.addErrorListener(() => {
-      setSyncStatus('error');
-    });
-  }, []);
-
-  console.log("Here");
-
-  console.log("Styles:", styles);
 
   const handleChange = (editorState: EditorState) => {
     editorState.read(() => {
-      console.log("Change detected", editorState);
-      const raw = $convertToMarkdownString(TRANSFORMERS);
-      const newPlan = raw.trim();
-      setPlan(newPlan);
-      setSyncStatus('not-synced');
-      debouncer.debounce(async () => {
-        await trpc.updatePlan.mutate(
-          { id: planId, text: newPlan },
-        );
-      });
+      const markdown = $convertToMarkdownString(TRANSFORMERS);
+      onTextChange(markdown.trim());
     });
   };
 
+
   const editorConfig: InitialConfigType = {
     namespace: 'PlanEditor',
-    // The editor theme
     theme,
-    // Handling of errors during update
     onError(error: Error) {
       throw error;
     },
-    // Any custom nodes go here
     nodes: [
       HeadingNode,
       ListNode,
@@ -194,31 +151,25 @@ export function PlanEditor({ initialPlan, planId }: PlanEditorProps) {
   };
 
   return (
-    <div style={{ height: '100%' }}>
-      <LexicalComposer initialConfig={editorConfig}>
-        <div className={styles.editorContainer}>
-          <ToolbarPlugin />
-          <div className={styles.editorInner}>
-            <RichTextPlugin
-              contentEditable={<ContentEditable className="editor-input" />}
-              placeholder={<div>Enter your plan...</div>}
-              ErrorBoundary={LexicalErrorBoundary}
-            />
-            <MyCustomAutoFocusPlugin />
-            <OnChangePlugin onChange={handleChange} />
-            <HistoryPlugin />
-            <AutoFocusPlugin />
-            <LoadDataPlugin initialPlan={plan} />
-            {/* <CodeHighlightPlugin /> */}
-            <ListPlugin />
-            <LinkPlugin />
-            {/* <AutoLinkPlugin /> */}
-            {/* <ListMaxIndentLevelPlugin maxDepth={7} /> */}
-            <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
-          </div>
+    <LexicalComposer initialConfig={editorConfig}>
+      <div className={styles.editorContainer}>
+        <ToolbarPlugin />
+        <div className={styles.editorInner}>
+          <RichTextPlugin
+            contentEditable={<ContentEditable className="editor-input" />}
+            placeholder={<div>Enter your plan...</div>}
+            ErrorBoundary={LexicalErrorBoundary}
+          />
+          <MyCustomAutoFocusPlugin />
+          <OnChangePlugin onChange={handleChange} />
+          <HistoryPlugin />
+          <AutoFocusPlugin />
+          <LoadDataPlugin initialText={initialText} />
+          <ListPlugin />
+          <LinkPlugin />
+          <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
         </div>
-      </LexicalComposer>
-      <p>Status: {prettySyncStatus(syncStatus)}</p>
-    </div>
+      </div>
+    </LexicalComposer>
   );
 }

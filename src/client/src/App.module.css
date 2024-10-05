@@ -11,26 +11,25 @@
   height: 100%;
   box-sizing: border-box;
   overflow-y: auto;
-  margin-right: 1rem; /* Add margin to the right of the sidebar */
 }
 
-.sidebarList {
+.sidebarList, .mobileNavList {
   list-style-type: none;
   padding: 0;
 }
 
-.sidebarItem {
+.navItem {
   margin-bottom: 1rem;
 }
 
-.sidebarLink {
+.navLink {
   color: var(--text-color);
   text-decoration: none;
   font-weight: bold;
   transition: color 0.3s ease;
 }
 
-.sidebarLink:hover {
+.navLink:hover {
   color: var(--accent-color);
 }
 
@@ -42,58 +41,66 @@
   overflow: hidden;
 }
 
-.mainContentTitle {
-  margin-top: 0;
+.mobileHeader {
+  background-color: var(--primary-color);
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.menuButton {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.mobileTitle {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.mobileNav {
+  position: fixed;
+  top: 60px; /* Adjust this value to match your header height */
+  left: 0;
+  right: 0;
+  background-color: var(--primary-color);
+  z-index: 999;
+  max-height: calc(100vh - 60px); /* Adjust this value to match your header height */
+  overflow-y: auto;
+}
+
+.mobileNavList {
+  margin: 0;
   padding: 1rem;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-
-.logoReact:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+@media (max-width: 767px) {
+  .root {
+    flex-direction: column;
   }
-  to {
-    transform: rotate(360deg);
+
+  .mainContent {
+    height: calc(100% - 60px); /* Adjust based on your header height */
+    overflow-y: auto;
+  }
+
+  .sidebar {
+    display: none;
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+@media (min-width: 768px) {
+  .mobileHeader {
+    display: none;
   }
-}
 
-.card {
-  padding: 2em;
-}
-
-.readTheDocs {
-  color: #888;
-}
-
-.appContainer {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.editorWrapper {
-  flex-grow: 1;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  .mobileNav {
+    display: none;
+  }
 }

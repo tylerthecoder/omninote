@@ -1,6 +1,6 @@
 import { MongoClient, Collection, ObjectId } from 'mongodb';
 import dotenv from 'dotenv';
-import { Plan, Todo, BuyListItem } from '../types/types.ts';
+import { Plan, Todo, BuyListItem, TalkNote } from '../types/types.ts';
 
 dotenv.config();
 
@@ -9,6 +9,7 @@ type NoId<T> = Omit<T, 'id'>;
 const MONGO_COLLECTION_NAME = 'notes';
 const TODO_COLLECTION_NAME = 'todos';
 const BUY_LIST_COLLECTION_NAME = 'buylist';
+const TALK_NOTE_COLLECTION_NAME = 'talknotes';
 
 class MongoDBService {
   private readonly client: MongoClient;
@@ -16,6 +17,7 @@ class MongoDBService {
   private collection?: Collection<NoId<Plan>>;
   private todoCollection?: Collection<NoId<Todo>>;
   private buyListCollection?: Collection<NoId<BuyListItem>>;
+  private talkNoteCollection?: Collection<NoId<TalkNote>>;
 
   constructor() {
     const uri = process.env.DB_URI;
@@ -36,6 +38,7 @@ class MongoDBService {
       this.collection = database.collection<NoId<Plan>>(MONGO_COLLECTION_NAME);
       this.todoCollection = database.collection<NoId<Todo>>(TODO_COLLECTION_NAME);
       this.buyListCollection = database.collection<NoId<BuyListItem>>(BUY_LIST_COLLECTION_NAME);
+      this.talkNoteCollection = database.collection<NoId<TalkNote>>(TALK_NOTE_COLLECTION_NAME);
     } catch (error) {
       console.error('Error connecting to MongoDB:', error);
       throw error;
@@ -54,7 +57,15 @@ class MongoDBService {
   }
 
   async getPlanByDay(day: Date): Promise<Plan | null> {
-    const result = await this.getCollection().findOne({ day: day });
+    const nextDay = new Date(day);
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    const result = await this.getCollection().findOne({
+      day: {
+        $gte: day.toISOString(),
+        $lt: nextDay.toISOString()
+      }
+    });
     return result ? { ...result, id: result._id.toString() } : null;
   }
 
@@ -192,6 +203,58 @@ class MongoDBService {
     const result = await this.getBuyListCollection().deleteOne({ _id: new ObjectId(id) });
     return result.deletedCount === 1;
   }
+
+  private getTalkNoteCollection(): Collection<NoId<TalkNote>> {
+    if (!this.talkNoteCollection) {
+      throw new Error('MongoDB talk note collection is not initialized. Did you forget to call connect()?');
+    }
+    return this.talkNoteCollection;
+  }
+
+  async createTalkNote(talkNote: Omit<TalkNote, 'id' | 'createdAt' | 'updatedAt'>): Promise<TalkNote> {
+    const newTalkNote: NoId<TalkNote> = {
+      ...talkNote,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const result = await this.getTalkNoteCollection().insertOne(newTalkNote);
+    return { ...newTalkNote, id: result.insertedId.toString() };
+  }
+
+  async getAllTalkNotes(): Promise<TalkNote[]> {
+    const results = await this.getTalkNoteCollection().find().sort({ date: -1 }).toArray();
+    return results.map(result => ({ ...result, id: result._id.toString() }));
+  }
+
+  async getTalkNoteById(id: string): Promise<TalkNote | null> {
+    const result = await this.getTalkNoteCollection().findOne({ _id: new ObjectId(id) });
+    return result ? { ...result, id: result._id.toString() } : null;
+  }
+
+  async updateTalkNote(id: string, update: Partial<Omit<TalkNote, 'id' | 'createdAt' | 'updatedAt'>>): Promise<TalkNote> {
+    const collection = this.getTalkNoteCollection();
+    const updateDoc = {
+      $set: {
+        ...update,
+        updatedAt: new Date().toISOString(),
+      },
+    };
+    const result = await collection.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      updateDoc,
+      { returnDocument: 'after' }
+    );
+    if (!result) {
+      throw new Error(`Talk note with id ${id} not found`);
+    }
+    return { ...result, id: result._id.toString() };
+  }
+
+  async deleteTalkNote(id: string): Promise<boolean> {
+    const result = await this.getTalkNoteCollection().deleteOne({ _id: new ObjectId(id) });
+    return result.deletedCount === 1;
+  }
 }
 
-export const mongoDBService = new MongoDBService();
+export { MongoDBService };

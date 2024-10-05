@@ -2,16 +2,18 @@ import { createExpressMiddleware } from '@trpc/server/adapters/express';
 import express from 'express';
 import { appRouter } from './router.ts';
 import cors from 'cors';
-import { mongoDBService } from './mongodb-service.ts';
 import dotenv from 'dotenv';
 import path from 'path';
+import { createContext } from './context.ts';
+import { Database } from './db.ts';
 
 dotenv.config();
 
 const SERVER_PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 const startServer = async () => {
-    await mongoDBService.connect();
+    // Initialize the database connection
+    await Database.getInstance();
 
     const app = express();
 
@@ -20,9 +22,7 @@ const startServer = async () => {
     // Set up the tRPC middleware
     app.use('/trpc', createExpressMiddleware({
         router: appRouter,
-        createContext() {
-            return {};
-        },
+        createContext,
     }));
 
     // Serve static files from the React app

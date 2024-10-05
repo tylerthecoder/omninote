@@ -21,6 +21,13 @@ export class Debouncer {
 		this.onError = listener;
 	}
 
+	clear() {
+		if (this.timeout) {
+			clearTimeout(this.timeout);
+		}
+		this.timeout = null;
+	}
+
 	debounce<T>(promise: () => Promise<T>): Promise<T> {
 		if (this.timeout) {
 			clearTimeout(this.timeout);
