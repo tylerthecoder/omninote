@@ -6,6 +6,7 @@ import { AllDays } from './PastDays.tsx'
 import { TodoList } from './TodoList.tsx'
 import { BuyList } from './BuyList.tsx'
 import { TalkNotesRouter } from './TalkNotes.tsx'
+import { ReadingListRouter } from './ReadingList.tsx'
 
 function App() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
@@ -43,6 +44,7 @@ function App() {
       <li className={styles.navItem}><Link to="/todos" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>All Todos</Link></li>
       <li className={styles.navItem}><Link to="/buy-list" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Buy List</Link></li>
       <li className={styles.navItem}><Link to="/talk-notes" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Talk Notes</Link></li>
+      <li className={styles.navItem}><Link to="/reading-list" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Reading List</Link></li>
     </>
   )
 
@@ -77,6 +79,7 @@ function App() {
             <Route path="/todos" element={<TodoList />} />
             <Route path="/buy-list" element={<BuyList />} />
             <Route path="/talk-notes/*" element={<TalkNotesRouter />} />
+            <Route path="/reading-list/*" element={<ReadingListRouter />} />
           </Routes>
         </main>
       </div>

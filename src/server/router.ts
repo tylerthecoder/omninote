@@ -187,6 +187,61 @@ export const appRouter = t.router({
 			return result;
 		}),
 
+	getAllReadingListItems: t.procedure.query(async ({ ctx }) => {
+		console.log("Getting all reading list items");
+		const items = await ctx.mongoDBService.getAllReadingListItems();
+		console.log("Got reading list items", items);
+		return items;
+	}),
+
+	getReadingListItem: t.procedure
+		.input(z.object({ id: z.string() }))
+		.query(async ({ input, ctx }) => {
+			console.log(`Getting reading list item with id: ${input.id}`);
+			const item = await ctx.mongoDBService.getReadingListItemById(input.id);
+			console.log("Got reading list item", item);
+			return item;
+		}),
+
+	createReadingListItem: t.procedure
+		.input(z.object({
+			name: z.string(),
+			url: z.string().optional(),
+			type: z.enum(['article', 'book']),
+				notes: z.string().optional(),
+		}))
+		.mutation(async ({ input, ctx }) => {
+			console.log("Creating new reading list item");
+			const newItem = await ctx.mongoDBService.createReadingListItem(input);
+			console.log("Created reading list item", newItem);
+			return newItem;
+		}),
+
+	deleteReadingListItem: t.procedure
+		.input(z.object({ id: z.string() }))
+		.mutation(async ({ input, ctx }) => {
+			console.log(`Deleting reading list item with id: ${input.id}`);
+			const result = await ctx.mongoDBService.deleteReadingListItem(input.id);
+			console.log("Delete result", result);
+			return result;
+		}),
+
+	updateReadingListItem: t.procedure
+		.input(z.object({
+			id: z.string(),
+			name: z.string().optional(),
+			url: z.string().optional(),
+			type: z.enum(['article', 'book']).optional(),
+			notes: z.string().optional(),
+		}))
+		.mutation(async ({ input, ctx }) => {
+			console.log(`Updating reading list item with id: ${input.id}`);
+			const { id, ...update } = input;
+			const updatedItem = await ctx.mongoDBService.updateReadingListItem(id, update);
+			console.log("Updated reading list item", updatedItem);
+			return updatedItem;
+		}),
+
 	// ... (existing routes)
 });
 

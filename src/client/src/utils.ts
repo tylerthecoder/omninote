@@ -1,68 +1,78 @@
+export type DebouncerStatus = 'not-synced' | 'synced' | 'syncing' | 'error';
+
+type StatusChangeListener = (status: DebouncerStatus) => void;
+
 export class Debouncer {
-	private timeout: NodeJS.Timeout | null = null;
-	private pendingPromise: Promise<unknown> | null = null;
-	private pendingResolve: ((value: unknown) => void) | null = null;
-	private pendingReject: ((reason?: unknown) => void) | null = null;
-	private onStart: (() => void) | null = null;
-	private onDone: (() => void) | null = null;
-	private onError: ((error: unknown) => void) | null = null;
+	private timeouts: Map<string, NodeJS.Timeout> = new Map();
+	private promises: Map<string, Promise<unknown>> = new Map();
+	private status: DebouncerStatus = 'synced';
+	private statusChangeListeners: StatusChangeListener[] = [];
 
 	constructor(private readonly delay: number) {}
 
-	addStartListener(listener: () => void) {
-		this.onStart = listener;
+	addStatusChangeListener(listener: StatusChangeListener) {
+		this.statusChangeListeners.push(listener);
 	}
 
-	addDoneListener(listener: () => void) {
-		this.onDone = listener;
+	private setStatus(newStatus: DebouncerStatus) {
+		if (this.status !== newStatus) {
+			this.status = newStatus;
+			this.statusChangeListeners.forEach(listener => listener(newStatus));
+		}
 	}
 
-	addErrorListener(listener: (error: unknown) => void) {
-		this.onError = listener;
+	private updateStatus() {
+		if (this.promises.size > 0) {
+			this.setStatus('syncing');
+		} else {
+			this.setStatus('synced');
+		}
+	}
+
+	debounce<T>(key: string, promiseFactory: () => Promise<T>): Promise<T> {
+		this.setStatus('not-synced');
+
+		// Clear existing timeout for this key
+		if (this.timeouts.has(key)) {
+			clearTimeout(this.timeouts.get(key)!);
+		}
+
+		// Create a new promise for this key
+		const promise = new Promise<T>((resolve, reject) => {
+			const timeout = setTimeout(() => {
+				this.updateStatus();
+				promiseFactory()
+					.then(result => {
+						resolve(result);
+					})
+					.catch(error => {
+						this.setStatus('error');
+						reject(error);
+					})
+					.finally(() => {
+						this.timeouts.delete(key);
+						this.promises.delete(key);
+						this.updateStatus();
+					});
+			}, this.delay);
+
+			this.timeouts.set(key, timeout);
+		});
+
+		this.promises.set(key, promise);
+		this.updateStatus();
+
+		return promise as Promise<T>;
+	}
+
+	getStatus(): DebouncerStatus {
+		return this.status;
 	}
 
 	clear() {
-		if (this.timeout) {
-			clearTimeout(this.timeout);
-		}
-		this.timeout = null;
-	}
-
-	debounce<T>(promise: () => Promise<T>): Promise<T> {
-		if (this.timeout) {
-			clearTimeout(this.timeout);
-		}
-
-		if (this.pendingPromise) {
-			this.pendingReject?.(new Error('Canceled'));
-			this.pendingPromise = null;
-			this.pendingResolve = null;
-			this.pendingReject = null;
-		}
-
-		return new Promise<T>((resolve, reject) => {
-			this.pendingResolve = resolve as (value: unknown) => void;
-			this.pendingReject = reject;
-
-			this.timeout = setTimeout(() => {
-				this.onStart?.();
-				this.pendingPromise = promise()
-					.then((result) => {
-						this.pendingResolve?.(result);
-						return result;
-					})
-					.catch((error) => {
-						this.pendingReject?.(error);
-						this.onError?.(error);
-						throw error;
-					})
-					.finally(() => {
-						this.pendingPromise = null;
-						this.pendingResolve = null;
-						this.pendingReject = null;
-						this.onDone?.();
-					});
-			}, this.delay);
-		});
+		this.timeouts.forEach(clearTimeout);
+		this.timeouts.clear();
+		this.promises.clear();
+		this.setStatus('synced');
 	}
 }

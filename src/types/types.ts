@@ -34,4 +34,15 @@ export type TalkNote = {
     updatedAt: string;
 }
 
+export type ReadingListItem = {
+    id: string;
+    name: string;
+    url?: string;
+    type: 'article' | 'book';
+    notes?: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+
 

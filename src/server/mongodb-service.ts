@@ -1,6 +1,6 @@
 import { MongoClient, Collection, ObjectId } from 'mongodb';
 import dotenv from 'dotenv';
-import { Plan, Todo, BuyListItem, TalkNote } from '../types/types.ts';
+import { Plan, Todo, BuyListItem, TalkNote, ReadingListItem } from '../types/types.ts';
 
 dotenv.config();
 
@@ -10,6 +10,7 @@ const MONGO_COLLECTION_NAME = 'notes';
 const TODO_COLLECTION_NAME = 'todos';
 const BUY_LIST_COLLECTION_NAME = 'buylist';
 const TALK_NOTE_COLLECTION_NAME = 'talknotes';
+const READING_LIST_COLLECTION_NAME = 'readinglist';
 
 class MongoDBService {
   private readonly client: MongoClient;
@@ -18,6 +19,7 @@ class MongoDBService {
   private todoCollection?: Collection<NoId<Todo>>;
   private buyListCollection?: Collection<NoId<BuyListItem>>;
   private talkNoteCollection?: Collection<NoId<TalkNote>>;
+  private readingListCollection?: Collection<NoId<ReadingListItem>>;
 
   constructor() {
     const uri = process.env.DB_URI;
@@ -39,6 +41,7 @@ class MongoDBService {
       this.todoCollection = database.collection<NoId<Todo>>(TODO_COLLECTION_NAME);
       this.buyListCollection = database.collection<NoId<BuyListItem>>(BUY_LIST_COLLECTION_NAME);
       this.talkNoteCollection = database.collection<NoId<TalkNote>>(TALK_NOTE_COLLECTION_NAME);
+      this.readingListCollection = database.collection<NoId<ReadingListItem>>(READING_LIST_COLLECTION_NAME);
     } catch (error) {
       console.error('Error connecting to MongoDB:', error);
       throw error;
@@ -254,6 +257,58 @@ class MongoDBService {
   async deleteTalkNote(id: string): Promise<boolean> {
     const result = await this.getTalkNoteCollection().deleteOne({ _id: new ObjectId(id) });
     return result.deletedCount === 1;
+  }
+
+  private getReadingListCollection(): Collection<NoId<ReadingListItem>> {
+    if (!this.readingListCollection) {
+      throw new Error('MongoDB reading list collection is not initialized. Did you forget to call connect()?');
+    }
+    return this.readingListCollection;
+  }
+
+  async createReadingListItem(item: Omit<ReadingListItem, 'id' | 'createdAt' | 'updatedAt'>): Promise<ReadingListItem> {
+    const newItem: NoId<ReadingListItem> = {
+      ...item,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const result = await this.getReadingListCollection().insertOne(newItem);
+    return { ...newItem, id: result.insertedId.toString() };
+  }
+
+  async getAllReadingListItems(): Promise<ReadingListItem[]> {
+    const results = await this.getReadingListCollection().find().sort({ createdAt: -1 }).toArray();
+    return results.map(result => ({ ...result, id: result._id.toString() }));
+  }
+
+  async deleteReadingListItem(id: string): Promise<boolean> {
+    const result = await this.getReadingListCollection().deleteOne({ _id: new ObjectId(id) });
+    return result.deletedCount === 1;
+  }
+
+  async updateReadingListItem(id: string, update: Partial<Omit<ReadingListItem, 'id' | 'createdAt' | 'updatedAt'>>): Promise<ReadingListItem> {
+    const collection = this.getReadingListCollection();
+    const updateDoc = {
+      $set: {
+        ...update,
+        updatedAt: new Date().toISOString(),
+      },
+    };
+    const result = await collection.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      updateDoc,
+      { returnDocument: 'after' }
+    );
+    if (!result) {
+      throw new Error(`Reading list item with id ${id} not found`);
+    }
+    return { ...result, id: result._id.toString() };
+  }
+
+  async getReadingListItemById(id: string): Promise<ReadingListItem | null> {
+    const result = await this.getReadingListCollection().findOne({ _id: new ObjectId(id) });
+    return result ? { ...result, id: result._id.toString() } : null;
   }
 }
 

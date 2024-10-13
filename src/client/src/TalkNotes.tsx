@@ -2,20 +2,20 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams, Route, Routes } from 'react-router-dom'
 import { trpc } from './trpc'
 import { Editor } from './editor/editor'
-import { Debouncer } from './utils'
+import { Debouncer, DebouncerStatus } from './utils'
 import { TalkNote } from '../../types/types'
 import ReactMarkdown from 'react-markdown'
 import styles from './TalkNotes.module.css'
 
-type SyncStatus = 'not-synced' | 'synced' | 'syncing...' | 'error';
+const debouncer = new Debouncer(500)
 
-const prettySyncStatus = (status: SyncStatus) => {
+const prettySyncStatus = (status: DebouncerStatus) => {
   switch (status) {
     case 'not-synced':
       return 'Not synced';
     case 'synced':
       return 'Synced';
-    case 'syncing...':
+    case 'syncing':
       return 'Syncing...';
     case 'error':
       return 'Error';
@@ -142,14 +142,13 @@ export function TalkNoteEdit() {
   const { id } = useParams<{ id: string }>()
   const [note, setNote] = useState<TalkNote | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>('synced')
+  const [syncStatus, setSyncStatus] = useState<DebouncerStatus>('synced')
   const navigate = useNavigate()
-  const debouncer = new Debouncer(500)
 
   useEffect(() => {
-    debouncer.addStartListener(() => setSyncStatus('syncing...'))
-    debouncer.addDoneListener(() => setSyncStatus('synced'))
-    debouncer.addErrorListener(() => setSyncStatus('error'))
+    debouncer.addStatusChangeListener((status) => {
+      setSyncStatus(status);
+    });
 
     const fetchNote = async () => {
       try {
@@ -171,13 +170,12 @@ export function TalkNoteEdit() {
     if (!note) return
 
     setNote(prev => prev ? { ...prev, content: newContent } : null)
-    setSyncStatus('not-synced')
-    debouncer.debounce(async () => {
+    debouncer.debounce('updateContent', async () => {
       try {
         await trpc.updateTalkNote.mutate({ id: note.id, content: newContent })
       } catch (error) {
         console.error('Error updating talk note:', error)
-        setSyncStatus('error')
+        setError('Failed to update talk note. Please try again later.')
       }
     })
   }
@@ -186,13 +184,12 @@ export function TalkNoteEdit() {
     if (!note) return
 
     setNote(prev => prev ? { ...prev, speaker: newSpeaker } : null)
-    setSyncStatus('not-synced')
-    debouncer.debounce(async () => {
+    debouncer.debounce('updateSpeaker', async () => {
       try {
         await trpc.updateTalkNote.mutate({ id: note.id, speaker: newSpeaker })
       } catch (error) {
-        console.error('Error updating talk note:', error)
-        setSyncStatus('error')
+        console.error('Error updating talk note speaker:', error)
+        setError('Failed to update talk note speaker. Please try again later.')
       }
     })
   }
@@ -201,13 +198,12 @@ export function TalkNoteEdit() {
     if (!note) return
 
     setNote(prev => prev ? { ...prev, title: newTitle } : null)
-    setSyncStatus('not-synced')
-    debouncer.debounce(async () => {
+    debouncer.debounce('updateTitle', async () => {
       try {
         await trpc.updateTalkNote.mutate({ id: note.id, title: newTitle })
       } catch (error) {
         console.error('Error updating talk note title:', error)
-        setSyncStatus('error')
+        setError('Failed to update talk note title. Please try again later.')
       }
     })
   }
