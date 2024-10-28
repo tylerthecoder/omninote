@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { trpc } from './trpc'
 import { Editor } from './editor/editor'
 import { Debouncer, DebouncerStatus } from './utils'
-import { Plan } from '../../types/types.ts'
+import { Plan } from 'tt-services'
 
 const debouncer = new Debouncer(500)
 

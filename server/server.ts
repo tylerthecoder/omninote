@@ -5,16 +5,12 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { createContext } from './context.ts';
-import { Database } from './db.ts';
 
 dotenv.config();
 
 const SERVER_PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 const startServer = async () => {
-    // Initialize the database connection
-    await Database.getInstance();
-
     const app = express();
 
     app.use(cors());
@@ -26,7 +22,7 @@ const startServer = async () => {
     }));
 
     // Serve static files from the React app
-    app.use(express.static(path.join(__dirname, '../client/dist')));
+    app.use(express.static(path.join(__dirname, '../dist')));
 
     // The "catchall" handler: for any request that doesn't
     // match one above, send back React's index.html file.

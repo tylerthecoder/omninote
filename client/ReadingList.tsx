@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Route, Routes } from 'react-router-dom';
 import { trpc } from './trpc';
 import { Debouncer, DebouncerStatus } from './utils';
-import { ReadingListItem } from '../../types/types';
 import { Editor } from './editor/editor';
 import styles from './ReadingList.module.css';
+import { ReadingListItem } from 'tt-services';
 
 const debouncer = new Debouncer(500);
 

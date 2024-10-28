@@ -1,16 +1,16 @@
 import { inferAsyncReturnType } from '@trpc/server';
 import { CreateExpressContextOptions } from '@trpc/server/adapters/express';
-import { Database } from './db.ts';
+import { TylersThings } from 'tt-services';
 
 export async function createContext({ req, res }: CreateExpressContextOptions) {
-  const mongoDBService = await Database.getInstance();
+  const tylersThings = await TylersThings.make();
 
   console.log("Creating context");
 
   return {
     req,
     res,
-    mongoDBService
+    tylersThings
   };
 }
 

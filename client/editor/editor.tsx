@@ -157,7 +157,6 @@ export function Editor({ text, onTextChange }: EditorProps) {
         <div className={styles.editorInner}>
           <RichTextPlugin
             contentEditable={<ContentEditable className="editor-input" />}
-            placeholder={<div>Enter your plan...</div>}
             ErrorBoundary={LexicalErrorBoundary}
           />
           <MyCustomAutoFocusPlugin />

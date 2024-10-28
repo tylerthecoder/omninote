@@ -1,19 +1,47 @@
 {
-    "name": "omni-note",
-    "workspaces": [
-        "src/client",
-        "src/server"
-    ],
+    "name": "omninote",
+    "type": "module",
     "scripts": {
-        "dev:server": "bun --cwd src/server dev",
-        "dev:client": "bun --cwd src/client dev",
+        "dev:server": "bun --watch server.ts",
+        "dev:client": "bun --watch client.ts",
         "dev": "run-p dev:* --print-label",
-        "typecheck:server": "bun --cwd src/server typecheck",
-        "typecheck:client": "bun --cwd src/client typecheck",
-        "typecheck": "run-p typecheck:*"
-
+        "typecheck:server": "tsc --noEmit server/server.ts",
+        "typecheck:client": "tsc --noEmit client/main.tsx",
+        "typecheck": "run-p typecheck:*",
+        "build": "tsc && bunx vite build"
     },
     "dependencies": {
-        "npm-run-all": "^4.1.5"
+        "tt-services": "file:../tt-services",
+        "@lexical/markdown": "^0.18.0",
+        "@lexical/react": "^0.18.0",
+        "@lexical/rich-text": "^0.18.0",
+        "lexical": "^0.18.0",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "react-markdown": "^9.0.1",
+        "react-router-dom": "^6.26.2",
+        "@trpc/client": "^11.0.0-rc.553",
+        "@trpc/server": "^11.0.0-rc.553",
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.5",
+        "express": "^4.21.0",
+        "mongodb": "^6.9.0",
+        "zod": "^3.23.8"
+    },
+    "devDependencies": {
+        "npm-run-all": "^4.1.5",
+        "@eslint/js": "^9.9.0",
+        "@types/react": "^18.3.3",
+        "@types/react-dom": "^18.3.0",
+        "@types/cors": "^2.8.17",
+        "@types/express": "^5.0.0",
+        "@vitejs/plugin-react-swc": "^3.5.0",
+        "eslint": "^9.9.0",
+        "eslint-plugin-react-hooks": "^5.1.0-rc.0",
+        "eslint-plugin-react-refresh": "^0.4.9",
+        "globals": "^15.9.0",
+        "typescript": "^5.5.3",
+        "typescript-eslint": "^8.0.1",
+        "vite": "^5.4.1"
     }
 }

@@ -3,9 +3,9 @@ import { useNavigate, useParams, Route, Routes } from 'react-router-dom'
 import { trpc } from './trpc'
 import { Editor } from './editor/editor'
 import { Debouncer, DebouncerStatus } from './utils'
-import { TalkNote } from '../../types/types'
 import ReactMarkdown from 'react-markdown'
 import styles from './TalkNotes.module.css'
+import { TalkNote } from 'tt-services'
 
 const debouncer = new Debouncer(500)
 

@@ -1,11 +1,6 @@
 import { useState, useEffect } from 'react'
 import { trpc } from './trpc'
-
-interface Plan {
-  id: string;
-  day: string;
-  text: string;
-}
+import { Plan } from 'tt-services'
 
 export function AllDays() {
   const [plans, setPlans] = useState<Plan[]>([])

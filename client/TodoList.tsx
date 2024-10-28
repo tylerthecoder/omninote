@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { trpc } from './trpc';
-import { Todo } from '../../types/types';
+import styles from './TodoList.module.css';
+import { Todo } from 'tt-services';
 
 export function TodoList() {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -63,31 +64,38 @@ export function TodoList() {
   };
 
   return (
-    <div>
+    <div className={styles.todoList}>
       <h2>Todo List</h2>
-      {error && <div className="error-message">{error}</div>}
-      <input
-        type="text"
-        value={newTodoText}
-        onChange={(e) => setNewTodoText(e.target.value)}
-        placeholder="Add a new todo"
-      />
-      <button onClick={handleAddTodo}>Add Todo</button>
+      {error && <div className={styles.errorMessage}>{error}</div>}
+      <div className={styles.addTodoForm}>
+        <input
+          type="text"
+          value={newTodoText}
+          onChange={(e) => setNewTodoText(e.target.value)}
+          placeholder="Add a new todo"
+          className={styles.input}
+        />
+        <button onClick={handleAddTodo} className={styles.addButton}>Add Todo</button>
+      </div>
       {isLoading ? (
-        <p>Loading...</p>
+        <p className={styles.loadingMessage}>Loading...</p>
       ) : (
         <ul>
           {todos.map(todo => (
-            <li key={todo.id}>
+            <li key={todo.id} className={styles.todoItem}>
               <input
                 type="checkbox"
                 checked={todo.completed}
                 onChange={() => handleToggleTodo(todo.id, todo.completed)}
+                className={styles.todoCheckbox}
               />
-              <span style={{ textDecoration: todo.completed ? 'line-through' : 'none' }}>
+              <span
+                className={styles.todoText}
+                style={{ textDecoration: todo.completed ? 'line-through' : 'none' }}
+              >
                 {todo.text}
               </span>
-              <button onClick={() => handleDeleteTodo(todo.id)}>Delete</button>
+              <button onClick={() => handleDeleteTodo(todo.id)} className={styles.deleteButton}>Delete</button>
             </li>
           ))}
         </ul>

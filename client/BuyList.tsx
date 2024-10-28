@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { trpc } from './trpc';
-import { BuyListItem } from '../../types/types';
+import { BuyListItem } from 'tt-services';
 
 export function BuyList() {
   const [items, setItems] = useState<BuyListItem[]>([]);
