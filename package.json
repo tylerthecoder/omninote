@@ -2,8 +2,8 @@
     "name": "omninote",
     "type": "module",
     "scripts": {
-        "dev:server": "bun --watch server.ts",
-        "dev:client": "bun --watch client.ts",
+        "dev:server": "bun --watch server/server.ts",
+        "dev:client": "vite dev",
         "dev": "run-p dev:* --print-label",
         "typecheck:server": "tsc --noEmit server/server.ts",
         "typecheck:client": "tsc --noEmit client/main.tsx",

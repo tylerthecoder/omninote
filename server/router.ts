@@ -282,6 +282,68 @@ export const appRouter = t.router({
     .mutation(async ({ input, ctx }) => {
       return ctx.tylersThings.notes.unpublishNote(input.id);
     }),
+
+  // Add these routes to the existing router
+  getAllCreations: t.procedure
+    .query(async ({ ctx }) => {
+      return ctx.tylersThings.creations.getAllCreations();
+    }),
+
+  getCreation: t.procedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input, ctx }) => {
+      return ctx.tylersThings.creations.getCreationById(input.id);
+    }),
+
+  createCreation: t.procedure
+    .input(z.object({
+      name: z.string(),
+      description: z.string(),
+      link: z.string(),
+      type: z.string(),
+      img: z.string()
+    }))
+    .mutation(async ({ input, ctx }) => {
+      return ctx.tylersThings.creations.createCreation(input);
+    }),
+
+  updateCreation: t.procedure
+    .input(z.object({
+      id: z.string(),
+      name: z.string().optional(),
+      description: z.string().optional(),
+      link: z.string().optional(),
+      type: z.string().optional(),
+      img: z.string().optional()
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const { id, ...update } = input;
+      return ctx.tylersThings.creations.updateCreation(id, update);
+    }),
+
+  deleteCreation: t.procedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      return ctx.tylersThings.creations.deleteCreation(input.id);
+    }),
+
+  // Add these routes to the existing creations routes
+  publishCreation: t.procedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      return ctx.tylersThings.creations.publishCreation(input.id);
+    }),
+
+  unpublishCreation: t.procedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      return ctx.tylersThings.creations.unpublishCreation(input.id);
+    }),
+
+  getPublishedCreations: t.procedure
+    .query(async ({ ctx }) => {
+      return ctx.tylersThings.creations.getPublishedCreations();
+    }),
 });
 
 export type AppRouter = typeof appRouter;

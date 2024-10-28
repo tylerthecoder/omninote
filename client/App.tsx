@@ -8,6 +8,7 @@ import { BuyList } from './BuyList.tsx'
 import { TalkNotesRouter } from './TalkNotes.tsx'
 import { ReadingListRouter } from './ReadingList.tsx'
 import { NotesRouter } from './Notes.tsx'
+import { CreationsRouter } from './creations/Creations.tsx'
 
 function App() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
@@ -49,6 +50,9 @@ function App() {
       <li className={styles.navItem}>
         <Link to="/notes" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Notes</Link>
       </li>
+      <li className={styles.navItem}>
+        <Link to="/creations" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Creations</Link>
+      </li>
     </>
   )
 
@@ -85,6 +89,7 @@ function App() {
             <Route path="/talk-notes/*" element={<TalkNotesRouter />} />
             <Route path="/reading-list/*" element={<ReadingListRouter />} />
             <Route path="/notes/*" element={<NotesRouter />} />
+            <Route path="/creations/*" element={<CreationsRouter />} />
           </Routes>
         </main>
       </div>

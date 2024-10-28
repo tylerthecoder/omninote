@@ -27,8 +27,7 @@ const startServer = async () => {
     // The "catchall" handler: for any request that doesn't
     // match one above, send back React's index.html file.
     app.get('*', (req, res) => {
-        console.log(path.join(__dirname, '../client/dist/index.html'));
-        res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+        res.sendFile(path.join(__dirname, '../dist/index.html'));
     });
 
     app.listen(SERVER_PORT, () => {
