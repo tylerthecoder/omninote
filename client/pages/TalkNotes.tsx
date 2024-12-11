@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams, Route, Routes } from 'react-router-dom'
-import { trpc } from './trpc'
-import { Editor } from './editor/editor'
-import { Debouncer, DebouncerStatus } from './utils'
+import { trpc } from '../trpc'
+import { Editor } from '../editor/editor'
+import { Debouncer, DebouncerStatus } from '../utils'
 import ReactMarkdown from 'react-markdown'
 import styles from './TalkNotes.module.css'
 import { TalkNote } from 'tt-services'
@@ -75,7 +75,7 @@ export function TalkNotesList() {
   }
 
   return (
-    <div className={styles.talkNotesList}>
+    <div className="container">
       <h1>Talk Notes</h1>
       {error && <div className="error-message">{error}</div>}
       {isLoading ? (
@@ -87,16 +87,16 @@ export function TalkNotesList() {
               <h3>{note.title}</h3>
               <p>{new Date(note.date).toLocaleDateString()} - {note.speaker}</p>
               <div className={styles.talkNoteActions}>
-                <button onClick={() => navigate(`/talk-notes/view/${note.id}`)}>View</button>
-                <button onClick={() => navigate(`/talk-notes/edit/${note.id}`)}>Edit</button>
-                <button onClick={() => handleDeleteNote(note.id)} className={styles.deleteButton}>Delete</button>
+                <button onClick={() => navigate(`/talk-notes/view/${note.id}`)} className="btn btn-primary">View</button>
+                <button onClick={() => navigate(`/talk-notes/edit/${note.id}`)} className="btn btn-info">Edit</button>
+                <button onClick={() => handleDeleteNote(note.id)} className="btn btn-danger">Delete</button>
               </div>
             </li>
           ))}
         </ul>
       )}
       <div className={styles.actionButtons}>
-        <button onClick={handleCreateNote} className={styles.createButton}>New Talk</button>
+        <button onClick={handleCreateNote} className="btn btn-primary">New Talk</button>
       </div>
     </div>
   )
@@ -125,9 +125,9 @@ export function TalkNoteView() {
   if (!note) return <p>Loading...</p>
 
   return (
-    <div className={styles.talkNoteView}>
+    <div className="container">
       <header className={styles.header}>
-        <button onClick={() => navigate('/talk-notes')} className={styles.backButton}>⬅️</button>
+        <button onClick={() => navigate('/talk-notes')} className="btn btn-nav">⬅️</button>
         <h1>{note.title}</h1>
       </header>
       <div className={styles.talkNoteContent}>
@@ -226,10 +226,10 @@ export function TalkNoteEdit() {
   if (!note) return <p>Loading...</p>
 
   return (
-    <div className={styles.talkNoteEdit}>
+    <div className="container">
       <header className={styles.header}>
-        <button onClick={() => navigate('/talk-notes')} className={styles.backButton}>⬅️</button>
-        <h1>Editing Talk Note</h1>
+        <button onClick={() => navigate('/talk-notes')} className="btn btn-nav">⬅️</button>
+        <h1>Edit Talk Note</h1>
       </header>
       <div className={styles.talkNoteForm}>
         <input
@@ -250,7 +250,7 @@ export function TalkNoteEdit() {
       </div>
       <div className={styles.actionButtons}>
         <p className={styles.syncStatus}>Status: {prettySyncStatus(syncStatus)}</p>
-        <button onClick={handleDelete} className={styles.deleteButton}>Delete Talk Note</button>
+        <button onClick={handleDelete} className="btn btn-danger">Delete Talk Note</button>
       </div>
     </div>
   )

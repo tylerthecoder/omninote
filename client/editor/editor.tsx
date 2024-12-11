@@ -21,6 +21,7 @@ import { AutoLinkNode, LinkNode } from "@lexical/link";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
+import { TabIndentationPlugin } from '@lexical/react/LexicalTabIndentationPlugin';
 import { EditorState, EditorThemeClasses } from 'lexical';
 import styles from './editor.module.css';
 
@@ -118,13 +119,10 @@ function LoadDataPlugin({ initialText }: { initialText: string }) {
 }
 
 export function Editor({ text, onTextChange }: EditorProps) {
-  const [initialText, setInitialText] = useState(text);
-
-
   const handleChange = (editorState: EditorState) => {
     editorState.read(() => {
       const markdown = $convertToMarkdownString(TRANSFORMERS);
-      onTextChange(markdown.trim());
+      onTextChange(markdown);
     });
   };
 
@@ -156,17 +154,18 @@ export function Editor({ text, onTextChange }: EditorProps) {
         <ToolbarPlugin />
         <div className={styles.editorInner}>
           <RichTextPlugin
-            contentEditable={<ContentEditable className="editor-input" />}
+            contentEditable={<ContentEditable />}
             ErrorBoundary={LexicalErrorBoundary}
           />
           <MyCustomAutoFocusPlugin />
           <OnChangePlugin onChange={handleChange} />
           <HistoryPlugin />
           <AutoFocusPlugin />
-          <LoadDataPlugin initialText={initialText} />
+          <LoadDataPlugin initialText={text} />
           <ListPlugin />
           <LinkPlugin />
           <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+          <TabIndentationPlugin />
         </div>
       </div>
     </LexicalComposer>

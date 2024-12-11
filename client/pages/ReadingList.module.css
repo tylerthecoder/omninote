@@ -1,22 +1,7 @@
-.readingList {
-  padding: 20px;
-  height: 100%;
-  overflow-y: auto;
-}
-
 .addItemForm {
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
-}
-
-.input {
-  flex: 1;
-}
-
-.addButton {
-  background-color: var(--primary-color);
-  color: var(--text-color);
 }
 
 .itemList {
@@ -51,11 +36,6 @@
   text-decoration: none;
 }
 
-.deleteButton {
-  background-color: var(--accent-color);
-  color: white;
-}
-
 .syncStatus {
   color: #666;
   font-style: italic;
@@ -67,22 +47,6 @@
   gap: 10px;
   align-items: center;
   width: 100%;
-}
-
-.updateButton {
-  background-color: var(--primary-color);
-  color: var(--text-color);
-}
-
-.cancelButton {
-  background-color: #ccc;
-  color: var(--text-color);
-}
-
-.editButton {
-  background-color: var(--primary-color);
-  color: var(--text-color);
-  margin-right: 10px;
 }
 
 .itemActions {

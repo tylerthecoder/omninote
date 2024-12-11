@@ -42,6 +42,28 @@ import {
   getDefaultCodeLanguage,
   getCodeLanguages
 } from "@lexical/code";
+import {
+  MdUndo,
+  MdRedo,
+  MdFormatBold,
+  MdFormatItalic,
+  MdFormatUnderlined,
+  MdStrikethroughS,
+  MdCode,
+  MdLink,
+  MdFormatAlignLeft,
+  MdFormatAlignCenter,
+  MdFormatAlignRight,
+  MdFormatAlignJustify,
+  MdArrowDropDown,
+  MdEdit,
+  MdFormatListBulleted,
+  MdFormatListNumbered,
+  MdFormatQuote,
+  MdTitle,
+  MdSubtitles,
+  MdNotes,
+} from "react-icons/md";
 
 import styles from './toolbar.module.css';
 
@@ -551,7 +573,7 @@ export default function ToolbarPlugin() {
         className={`${styles.toolbarItem} ${styles.spaced}`}
         aria-label="Undo"
       >
-        ↩️
+        <MdUndo />
       </button>
       <button
         disabled={!canRedo}
@@ -561,7 +583,7 @@ export default function ToolbarPlugin() {
         className={styles.toolbarItem}
         aria-label="Redo"
       >
-        ↪️
+        <MdRedo />
       </button>
       <Divider />
       {supportedBlockTypes.has(blockType) && (
@@ -573,15 +595,15 @@ export default function ToolbarPlugin() {
             }
             aria-label="Formatting Options"
           >
-            {blockType === 'paragraph' && '📝'}
-            {blockType === 'h1' && '🔠'}
-            {blockType === 'h2' && '🔡'}
-            {blockType === 'ul' && '🔘'}
-            {blockType === 'ol' && '🔢'}
-            {blockType === 'quote' && '💬'}
-            {blockType === 'code' && '💻'}
+            {blockType === 'paragraph' && <MdNotes />}
+            {blockType === 'h1' && <MdTitle />}
+            {blockType === 'h2' && <MdSubtitles />}
+            {blockType === 'ul' && <MdFormatListBulleted />}
+            {blockType === 'ol' && <MdFormatListNumbered />}
+            {blockType === 'quote' && <MdFormatQuote />}
+            {blockType === 'code' && <MdCode />}
             <span className={styles.toolbarText}>{blockTypeToBlockName[blockType]}</span>
-            🔽
+            <MdArrowDropDown />
           </button>
           {showBlockOptionsDropDown &&
             createPortal(
@@ -615,7 +637,7 @@ export default function ToolbarPlugin() {
             className={`${styles.toolbarItem} ${styles.spaced} ${isBold ? styles.active : ""}`}
             aria-label="Format Bold"
           >
-            🅱️
+            <MdFormatBold />
           </button>
           <button
             onClick={() => {
@@ -624,7 +646,7 @@ export default function ToolbarPlugin() {
             className={`${styles.toolbarItem} ${styles.spaced} ${isItalic ? styles.active : ""}`}
             aria-label="Format Italics"
           >
-            🖋️
+            <MdFormatItalic />
           </button>
           <button
             onClick={() => {
@@ -633,7 +655,7 @@ export default function ToolbarPlugin() {
             className={`${styles.toolbarItem} ${styles.spaced} ${isUnderline ? styles.active : ""}`}
             aria-label="Format Underline"
           >
-            ➖
+            <MdFormatUnderlined />
           </button>
           <button
             onClick={() => {
@@ -642,7 +664,7 @@ export default function ToolbarPlugin() {
             className={`${styles.toolbarItem} ${styles.spaced} ${isStrikethrough ? styles.active : ""}`}
             aria-label="Format Strikethrough"
           >
-            ✂️
+            <MdStrikethroughS />
           </button>
           <button
             onClick={() => {
@@ -651,14 +673,14 @@ export default function ToolbarPlugin() {
             className={`${styles.toolbarItem} ${styles.spaced} ${isCode ? styles.active : ""}`}
             aria-label="Insert Code"
           >
-            💻
+            <MdCode />
           </button>
           <button
             onClick={insertLink}
             className={`${styles.toolbarItem} ${styles.spaced} ${isLink ? styles.active : ""}`}
             aria-label="Insert Link"
           >
-            🔗
+            <MdLink />
           </button>
           {isLink &&
             createPortal(<FloatingLinkEditor editor={editor} />, document.body)}
@@ -670,7 +692,7 @@ export default function ToolbarPlugin() {
             className={`${styles.toolbarItem} ${styles.spaced}`}
             aria-label="Left Align"
           >
-            ⬅️
+            <MdFormatAlignLeft />
           </button>
           <button
             onClick={() => {
@@ -679,7 +701,7 @@ export default function ToolbarPlugin() {
             className={`${styles.toolbarItem} ${styles.spaced}`}
             aria-label="Center Align"
           >
-            ⏺️
+            <MdFormatAlignCenter />
           </button>
           <button
             onClick={() => {
@@ -688,7 +710,7 @@ export default function ToolbarPlugin() {
             className={`${styles.toolbarItem} ${styles.spaced}`}
             aria-label="Right Align"
           >
-            ➡️
+            <MdFormatAlignRight />
           </button>
           <button
             onClick={() => {
@@ -697,7 +719,7 @@ export default function ToolbarPlugin() {
             className={styles.toolbarItem}
             aria-label="Justify Align"
           >
-            ↔️
+            <MdFormatAlignJustify />
           </button>{" "}
         </>
       )}

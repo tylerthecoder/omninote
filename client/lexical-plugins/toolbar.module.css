@@ -1,4 +1,3 @@
-
 .toolbar {
   display: flex;
   margin-bottom: 1px;
@@ -228,4 +227,15 @@
 
 .linkInputLink:hover {
   text-decoration: underline;
+}
+
+.toolbarItem svg {
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.toolbarItem.active svg {
+  fill: var(--primary-color);
 }

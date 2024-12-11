@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { trpc } from './trpc';
+import { trpc } from '../trpc';
+import styles from './BuyList.module.css';
 import { BuyListItem } from 'tt-services';
 
 export function BuyList() {
@@ -66,27 +67,29 @@ export function BuyList() {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className={styles.loadingMessage}>Loading...</div>;
   }
 
   return (
-    <div>
+    <div className="container">
       <h1>Buy List</h1>
       {error && <div className="error-message">{error}</div>}
-      <form onSubmit={handleCreateItem}>
+
+      <form onSubmit={handleCreateItem} className="input-container">
         <input
           type="text"
           value={newItemText}
           onChange={(e) => setNewItemText(e.target.value)}
           placeholder="Add new item"
         />
-        <button type="submit">Add</button>
+        <button type="submit" className="btn btn-primary">Add</button>
       </form>
-      <ul>
+
+      <ul className="list">
         {items.map(item => (
-          <li key={item.id}>
+          <li key={item.id} className="card">
             {editingItem?.id === item.id ? (
-              <form onSubmit={() => handleUpdateItem(editingItem)}>
+              <form onSubmit={(e) => { e.preventDefault(); handleUpdateItem(editingItem); }} className="card-content">
                 <input
                   type="text"
                   value={editingItem.text}
@@ -103,21 +106,52 @@ export function BuyList() {
                   onChange={(e) => setEditingItem({ ...editingItem, notes: e.target.value })}
                   placeholder="Notes"
                 />
-                <button type="submit">Save</button>
-                <button onClick={() => setEditingItem(null)}>Cancel</button>
+                <div className="btn-group">
+                  <button type="submit" className="btn btn-info">Save</button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingItem(null)}
+                    className="btn btn-danger"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </form>
             ) : (
               <>
-                <span style={{ textDecoration: item.completed ? 'line-through' : 'none' }}>
-                  {item.text}
-                </span>
-                {item.url && <a href={item.url} target="_blank" rel="noopener noreferrer"> (Link)</a>}
-                {item.notes && <p>{item.notes}</p>}
-                <button onClick={() => setEditingItem(item)}>Edit</button>
-                <button onClick={() => handleDeleteItem(item.id)}>Delete</button>
-                <button onClick={() => handleUpdateItem({ ...item, completed: !item.completed })}>
-                  {item.completed ? 'Mark Incomplete' : 'Mark Complete'}
-                </button>
+                <div className="card-content">
+                  <div className="checkbox-container">
+                    <input
+                      type="checkbox"
+                      checked={item.completed}
+                      onChange={() => handleUpdateItem({ ...item, completed: !item.completed })}
+                      className="checkbox"
+                    />
+                    <span className="card-title" style={{ textDecoration: item.completed ? 'line-through' : 'none' }}>
+                      {item.text}
+                    </span>
+                  </div>
+                  {item.url && (
+                    <a href={item.url} target="_blank" rel="noopener noreferrer" className="card-link">
+                      View Link
+                    </a>
+                  )}
+                  {item.notes && <p className="card-meta">{item.notes}</p>}
+                </div>
+                <div className="card-actions">
+                  <button
+                    onClick={() => setEditingItem(item)}
+                    className="btn btn-info"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteItem(item.id)}
+                    className="btn btn-danger"
+                  >
+                    Delete
+                  </button>
+                </div>
               </>
             )}
           </li>

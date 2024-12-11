@@ -1,0 +1,62 @@
+.addForm {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.moviesSection {
+  margin-top: 2rem;
+}
+
+.movieList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.movieItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.movieCheckbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.movieInfo {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.movieTitle {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.movieGenre {
+  font-size: 0.9rem;
+  color: #666;
+  padding: 2px 8px;
+  background-color: #f0f0f0;
+  border-radius: 12px;
+}
+
+.movieRating {
+  color: #f1c40f;
+  font-weight: bold;
+}
+
+.movieActions {
+  display: flex;
+  gap: 8px;
+}

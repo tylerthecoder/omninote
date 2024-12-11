@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { trpc } from './trpc'
+import { trpc } from '../trpc'
 import { Plan } from 'tt-services'
+import styles from './PastDays.module.css'
 
 export function AllDays() {
   const [plans, setPlans] = useState<Plan[]>([])
@@ -29,17 +30,19 @@ export function AllDays() {
   }, [])
 
   return (
-    <div>
+    <div className="container">
       <h1>All Days</h1>
       {error && <div className="error-message">{error}</div>}
       {isLoading ? (
-        <p>Loading...</p>
+        <div className="loading-message">Loading...</div>
       ) : (
-        <ul>
+        <ul className={styles.plansList}>
           {plans.map(plan => (
-            <li key={plan.id}>
-              <h3>{plan.day}</h3>
-              <p>{plan.text}</p>
+            <li key={plan.id} className={styles.planItem}>
+              <h3 className={styles.planDate}>{plan.day}</h3>
+              <div className={styles.planContent}>
+                {plan.text}
+              </div>
             </li>
           ))}
         </ul>

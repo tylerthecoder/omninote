@@ -344,6 +344,188 @@ export const appRouter = t.router({
     .query(async ({ ctx }) => {
       return ctx.tylersThings.creations.getPublishedCreations();
     }),
+
+  // Add these to the existing router
+  getAllSparks: t.procedure
+    .query(async ({ ctx }) => {
+        return ctx.tylersThings.sparks.getAllSparks();
+    }),
+
+  getSpark: t.procedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input, ctx }) => {
+        return ctx.tylersThings.sparks.getSparkById(input.id);
+    }),
+
+  createSpark: t.procedure
+    .input(z.object({ name: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+        return ctx.tylersThings.sparks.createSpark(input);
+    }),
+
+  updateSpark: t.procedure
+    .input(z.object({
+        id: z.string(),
+        name: z.string().optional(),
+        notes: z.string().optional(),
+        completed: z.boolean().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+        const { id, ...update } = input;
+        return ctx.tylersThings.sparks.updateSpark(id, update);
+    }),
+
+  deleteSpark: t.procedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+        return ctx.tylersThings.sparks.deleteSpark(input.id);
+    }),
+
+  // Add these to the existing router
+  getAllMovies: t.procedure
+    .query(async ({ ctx }) => {
+        return ctx.tylersThings.movies.getAllMovies();
+    }),
+
+  getMovie: t.procedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input, ctx }) => {
+        return ctx.tylersThings.movies.getMovieById(input.id);
+    }),
+
+  createMovie: t.procedure
+    .input(z.object({
+        title: z.string(),
+        notes: z.string(),
+        genre: z.string().optional(),
+        releaseYear: z.number().optional()
+    }))
+    .mutation(async ({ input, ctx }) => {
+        return ctx.tylersThings.movies.createMovie(input);
+    }),
+
+  updateMovie: t.procedure
+    .input(z.object({
+        id: z.string(),
+        title: z.string().optional(),
+        notes: z.string().optional(),
+        genre: z.string().optional(),
+        releaseYear: z.number().optional(),
+        rating: z.number().optional(),
+        watched: z.boolean().optional()
+    }))
+    .mutation(async ({ input, ctx }) => {
+        const { id, ...update } = input;
+        return ctx.tylersThings.movies.updateMovie(id, update);
+    }),
+
+  deleteMovie: t.procedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+        return ctx.tylersThings.movies.deleteMovie(input.id);
+    }),
+
+  // Add these to the existing router
+  getAllWeekendProjects: t.procedure
+    .query(async ({ ctx }) => {
+        return ctx.tylersThings.weekendProjects.getAllWeekendProjects();
+    }),
+
+  getWeekendProject: t.procedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input, ctx }) => {
+        return ctx.tylersThings.weekendProjects.getWeekendProjectById(input.id);
+    }),
+
+  createWeekendProject: t.procedure
+    .input(z.object({ title: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+        return ctx.tylersThings.weekendProjects.createWeekendProject(input);
+    }),
+
+  updateWeekendProject: t.procedure
+    .input(z.object({
+        id: z.string(),
+        title: z.string().optional(),
+        notes: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+        const { id, ...update } = input;
+        return ctx.tylersThings.weekendProjects.updateWeekendProject(id, update);
+    }),
+
+  deleteWeekendProject: t.procedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+        return ctx.tylersThings.weekendProjects.deleteWeekendProject(input.id);
+    }),
+
+  // Add these to the existing router
+  getAllTechies: t.procedure
+    .query(async ({ ctx }) => {
+        return ctx.tylersThings.techies.getAllTechies();
+    }),
+
+  getTechie: t.procedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input, ctx }) => {
+        return ctx.tylersThings.techies.getTechieById(input.id);
+    }),
+
+  createTechie: t.procedure
+    .input(z.object({
+        title: z.string(),
+        content: z.string(),
+        url: z.string().optional()
+    }))
+    .mutation(async ({ input, ctx }) => {
+        return ctx.tylersThings.techies.createTechie(input);
+    }),
+
+  updateTechie: t.procedure
+    .input(z.object({
+        id: z.string(),
+        title: z.string().optional(),
+        content: z.string().optional(),
+        url: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+        const { id, ...update } = input;
+        return ctx.tylersThings.techies.updateTechie(id, update);
+    }),
+
+  deleteTechie: t.procedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+        return ctx.tylersThings.techies.deleteTechie(input.id);
+    }),
+
+  // Add these new routes for tag management
+  addTag: t.procedure
+    .input(z.object({
+      id: z.string(),
+      tag: z.string()
+    }))
+    .mutation(async ({ input, ctx }) => {
+      return ctx.tylersThings.notes.addTag(input.id, input.tag);
+    }),
+
+  removeTag: t.procedure
+    .input(z.object({
+      id: z.string(),
+      tag: z.string()
+    }))
+    .mutation(async ({ input, ctx }) => {
+      return ctx.tylersThings.notes.removeTag(input.id, input.tag);
+    }),
+
+  getNotesByTag: t.procedure
+    .input(z.object({
+      tag: z.string()
+    }))
+    .query(async ({ input, ctx }) => {
+      return ctx.tylersThings.notes.getNotesByTag(input.tag);
+    }),
 });
 
 export type AppRouter = typeof appRouter;

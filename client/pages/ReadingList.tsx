@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Route, Routes } from 'react-router-dom';
-import { trpc } from './trpc';
-import { Debouncer, DebouncerStatus } from './utils';
-import { Editor } from './editor/editor';
+import { trpc } from '../trpc';
+import { Debouncer, DebouncerStatus } from '../utils';
+import { Editor } from '../editor/editor';
 import styles from './ReadingList.module.css';
 import { ReadingListItem } from 'tt-services';
 
@@ -121,8 +121,9 @@ export function ReadingList() {
   if (error) return <div className="error-message">{error}</div>;
 
   return (
-    <div className={styles.readingList}>
+    <div className="container">
       <h1>Reading List</h1>
+      {error && <div className="error-message">{error}</div>}
       <div className={styles.addItemForm}>
         <input
           type="text"
@@ -146,7 +147,7 @@ export function ReadingList() {
           <option value="article">Article</option>
           <option value="book">Book</option>
         </select>
-        <button onClick={handleCreateItem} className={styles.addButton}>
+        <button onClick={handleCreateItem} className="btn btn-primary">
           Add Item
         </button>
       </div>
@@ -175,10 +176,10 @@ export function ReadingList() {
                   <option value="article">Article</option>
                   <option value="book">Book</option>
                 </select>
-                <button onClick={handleUpdateItem} className={styles.updateButton}>
+                <button onClick={handleUpdateItem} className="btn btn-primary">
                   Update
                 </button>
-                <button onClick={() => setEditingItem(null)} className={styles.cancelButton}>
+                <button onClick={() => setEditingItem(null)} className="btn btn-danger">
                   Cancel
                 </button>
               </div>
@@ -194,13 +195,13 @@ export function ReadingList() {
                   )}
                 </div>
                 <div className={styles.itemActions}>
-                  <button onClick={() => handleEditItem(item)} className={styles.editButton}>
+                  <button onClick={() => handleEditItem(item)} className="btn btn-info">
                     Edit
                   </button>
-                  <button onClick={() => handleOpenNotes(item)} className={styles.notesButton}>
+                  <button onClick={() => handleOpenNotes(item)} className="btn btn-primary">
                     Notes
                   </button>
-                  <button onClick={() => handleDeleteItem(item.id)} className={styles.deleteButton}>
+                  <button onClick={() => handleDeleteItem(item.id)} className="btn btn-danger">
                     Delete
                   </button>
                 </div>
@@ -260,9 +261,9 @@ export function ReadingListNotes() {
   if (!item) return <p>Loading...</p>;
 
   return (
-    <div className={styles.readingListNotes}>
+    <div className="container">
       <header className={styles.header}>
-        <button onClick={() => navigate('/reading-list')} className={styles.backButton}>⬅️</button>
+        <button onClick={() => navigate('/reading-list')} className="btn btn-nav">⬅️</button>
         <h1>Notes: {item.name}</h1>
       </header>
       <Editor text={item.notes || ''} onTextChange={handleNotesChange} />

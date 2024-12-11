@@ -95,21 +95,21 @@ export function CreationsList() {
               </span>
             </div>
             <div className={styles.creationActions}>
-              <button onClick={() => navigate(`/creations/view/${creation.id}`)}>View</button>
-              <button onClick={() => navigate(`/creations/edit/${creation.id}`)}>Edit</button>
+              <button onClick={() => navigate(`/creations/view/${creation.id}`)} className="btn btn-primary">View</button>
+              <button onClick={() => navigate(`/creations/edit/${creation.id}`)} className="btn btn-info">Edit</button>
               <button
                 onClick={() => handlePublishToggle(creation.id, creation.published)}
-                className={creation.published ? styles.unpublishButton : styles.publishButton}
+                className={`btn ${creation.published ? 'btn-warning' : 'btn-primary'}`}
               >
                 {creation.published ? 'Unpublish' : 'Publish'}
               </button>
-              <button onClick={() => handleDeleteCreation(creation.id)} className={styles.deleteButton}>Delete</button>
+              <button onClick={() => handleDeleteCreation(creation.id)} className="btn btn-danger">Delete</button>
             </div>
           </div>
         ))}
       </div>
       <div className={styles.actionButtons}>
-        <button onClick={handleCreateCreation} className={styles.createButton}>New Creation</button>
+        <button onClick={handleCreateCreation} className="btn btn-primary">New Creation</button>
       </div>
     </div>
   )
@@ -140,7 +140,7 @@ export function CreationView() {
   return (
     <div className={styles.creationView}>
       <header className={styles.header}>
-        <button onClick={() => navigate('/creations')} className={styles.backButton}>⬅️</button>
+        <button onClick={() => navigate('/creations')} className="btn btn-nav">⬅️</button>
         <h1>{creation.name}</h1>
       </header>
       <div className={styles.creationContent}>
@@ -223,12 +223,12 @@ export function CreationEdit() {
   return (
     <div className={styles.creationEdit}>
       <header className={styles.header}>
-        <button onClick={() => navigate('/creations')} className={styles.backButton}>⬅️</button>
+        <button onClick={() => navigate('/creations')} className="btn btn-nav">⬅️</button>
         <h1>Edit Creation</h1>
         <div className={styles.headerActions}>
           <button
             onClick={handlePublishToggle}
-            className={creation.published ? styles.unpublishButton : styles.publishButton}
+            className={`btn ${creation.published ? 'btn-warning' : 'btn-primary'}`}
           >
             {creation.published ? 'Unpublish' : 'Publish'}
           </button>

@@ -93,19 +93,6 @@
   margin-bottom: 0;
 }
 
-.input, .textarea {
-  width: 100%;
-  padding: 8px;
-  margin-bottom: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.textarea {
-  min-height: 100px;
-  resize: vertical;
-}
-
 .syncStatus {
   color: #666;
   font-style: italic;

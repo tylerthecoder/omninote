@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { trpc } from './trpc'
-import { Editor } from './editor/editor'
-import { Debouncer, DebouncerStatus } from './utils'
+import { trpc } from '../trpc'
+import { Editor } from '../editor/editor'
+import { Debouncer, DebouncerStatus } from '../utils'
 import { Plan } from 'tt-services'
+import styles from './Today.module.css'
 
 const debouncer = new Debouncer(500)
 
@@ -63,19 +64,24 @@ export function Today() {
     }
   }
 
-  if (isLoading) return <p>Loading...</p>
+  if (isLoading) return <div className="loading-message">Loading...</div>
   if (error) return <div className="error-message">{error}</div>
 
   return (
-    <div>
+    <div className="container">
       <h1>Today's Plan</h1>
       {plan ? (
         <>
           <Editor text={plan.text} onTextChange={handlePlanChange} />
-          <p>Status: {syncStatus}</p>
+          <p className={styles.syncStatus}>Status: {syncStatus}</p>
         </>
       ) : (
-        <button onClick={handleCreatePlan}>Create Today's Plan</button>
+        <button
+          onClick={handleCreatePlan}
+          className="btn btn-primary btn-lg"
+        >
+          Create Today's Plan
+        </button>
       )}
     </div>
   )
