@@ -1,162 +1,118 @@
-import React, { useState, useEffect } from 'react';
-import { trpc } from '../trpc';
-import styles from './BuyList.module.css';
-import { BuyListItem } from 'tt-services';
+import { useState } from 'react'
+import { trpc } from '../trpc'
+import { BuyListItem } from 'tt-services'
+import { AppPage } from '../layout/AppPage'
+import { BuyListItemView } from '../components/BuyListItemView'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { IoMdAdd } from 'react-icons/io'
 
 export function BuyList() {
-  const [items, setItems] = useState<BuyListItem[]>([]);
-  const [newItemText, setNewItemText] = useState('');
-  const [editingItem, setEditingItem] = useState<BuyListItem | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [newItemText, setNewItemText] = useState('')
+  const queryClient = useQueryClient()
 
-  const fetchBuyListItems = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const fetchedItems = await trpc.getAllBuyListItems.query();
-      setItems(fetchedItems as BuyListItem[]);
-    } catch (error) {
-      console.error('Error fetching buy list items:', error);
-      setError('Failed to fetch buy list items. Please try again later.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { data: items, isLoading, error } = useQuery({
+    queryKey: ['buyList'],
+    queryFn: () => trpc.getAllBuyListItems.query(),
+  })
 
-  useEffect(() => {
-    fetchBuyListItems();
-  }, []);
+  const createItemMutation = useMutation({
+    mutationFn: (text: string) => trpc.createBuyListItem.mutate({ text, completed: false }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['buyList'] })
+      setNewItemText('')
+    },
+  })
 
-  const handleCreateItem = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newItemText.trim()) {
-      try {
-        const newItem = await trpc.createBuyListItem.mutate({
-          text: newItemText,
-          completed: false,
-        });
-        setItems([...items, newItem]);
-        setNewItemText('');
-      } catch (error) {
-        console.error('Error creating buy list item:', error);
-        setError('Failed to create buy list item. Please try again.');
+  const updateItemMutation = useMutation({
+    mutationFn: (item: BuyListItem) => trpc.updateBuyListItem.mutate(item),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['buyList'] })
+    },
+  })
+
+  const deleteItemMutation = useMutation({
+    mutationFn: (id: string) => {
+      if (!window.confirm('Are you sure you want to delete this item?')) {
+        throw new Error('Delete cancelled')
       }
-    }
-  };
+      return trpc.deleteBuyListItem.mutate({ id })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['buyList'] })
+    },
+  })
 
-  const handleUpdateItem = async (item: BuyListItem) => {
-    try {
-      const updatedItem = await trpc.updateBuyListItem.mutate(item);
-      setItems(items.map(i => i.id === updatedItem.id ? updatedItem : i));
-      setEditingItem(null);
-    } catch (error) {
-      console.error('Error updating buy list item:', error);
-      setError('Failed to update buy list item. Please try again.');
+  const handleAddItem = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (newItemText.trim()) {
+      createItemMutation.mutate(newItemText.trim())
     }
-  };
-
-  const handleDeleteItem = async (id: string) => {
-    try {
-      await trpc.deleteBuyListItem.mutate({ id });
-      setItems(items.filter(item => item.id !== id));
-    } catch (error) {
-      console.error('Error deleting buy list item:', error);
-      setError('Failed to delete buy list item. Please try again.');
-    }
-  };
-
-  if (isLoading) {
-    return <div className={styles.loadingMessage}>Loading...</div>;
   }
 
-  return (
-    <div className="container">
-      <h1>Buy List</h1>
-      {error && <div className="error-message">{error}</div>}
+  const activeItems = items?.filter(item => !item.completed) || []
+  const completedItems = items?.filter(item => item.completed) || []
 
-      <form onSubmit={handleCreateItem} className="input-container">
+  const content = (
+    <div className="space-y-6">
+      <form onSubmit={handleAddItem} className="flex gap-2">
         <input
           type="text"
           value={newItemText}
           onChange={(e) => setNewItemText(e.target.value)}
           placeholder="Add new item"
+          className="flex-1"
         />
-        <button type="submit" className="btn btn-primary">Add</button>
+        <button
+          type="submit"
+          disabled={!newItemText.trim() || createItemMutation.isPending}
+          className="btn btn-primary flex items-center gap-2"
+        >
+          <IoMdAdd className="w-5 h-5" />
+          Add Item
+        </button>
       </form>
 
-      <ul className="list">
-        {items.map(item => (
-          <li key={item.id} className="card">
-            {editingItem?.id === item.id ? (
-              <form onSubmit={(e) => { e.preventDefault(); handleUpdateItem(editingItem); }} className="card-content">
-                <input
-                  type="text"
-                  value={editingItem.text}
-                  onChange={(e) => setEditingItem({ ...editingItem, text: e.target.value })}
-                />
-                <input
-                  type="text"
-                  value={editingItem.url || ''}
-                  onChange={(e) => setEditingItem({ ...editingItem, url: e.target.value })}
-                  placeholder="URL"
-                />
-                <textarea
-                  value={editingItem.notes || ''}
-                  onChange={(e) => setEditingItem({ ...editingItem, notes: e.target.value })}
-                  placeholder="Notes"
-                />
-                <div className="btn-group">
-                  <button type="submit" className="btn btn-info">Save</button>
-                  <button
-                    type="button"
-                    onClick={() => setEditingItem(null)}
-                    className="btn btn-danger"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <>
-                <div className="card-content">
-                  <div className="checkbox-container">
-                    <input
-                      type="checkbox"
-                      checked={item.completed}
-                      onChange={() => handleUpdateItem({ ...item, completed: !item.completed })}
-                      className="checkbox"
-                    />
-                    <span className="card-title" style={{ textDecoration: item.completed ? 'line-through' : 'none' }}>
-                      {item.text}
-                    </span>
-                  </div>
-                  {item.url && (
-                    <a href={item.url} target="_blank" rel="noopener noreferrer" className="card-link">
-                      View Link
-                    </a>
-                  )}
-                  {item.notes && <p className="card-meta">{item.notes}</p>}
-                </div>
-                <div className="card-actions">
-                  <button
-                    onClick={() => setEditingItem(item)}
-                    className="btn btn-info"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteItem(item.id)}
-                    className="btn btn-danger"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </>
-            )}
-          </li>
-        ))}
-      </ul>
+      {(error || createItemMutation.error || updateItemMutation.error || deleteItemMutation.error) && (
+        <div className="error-message">
+          {error?.message ||
+            createItemMutation.error?.message ||
+            updateItemMutation.error?.message ||
+            deleteItemMutation.error?.message}
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="loading-message">Loading...</div>
+      ) : (
+        <div className="space-y-8">
+          <div>
+            <h2 className="text-lg font-medium text-gray-700 mb-2">Active Items</h2>
+            <BuyListItemView
+              items={activeItems}
+              onToggle={(id, completed) => updateItemMutation.mutate({ id, completed: !completed } as BuyListItem)}
+              onDelete={(id) => deleteItemMutation.mutate(id)}
+              onUpdate={(item) => updateItemMutation.mutate(item)}
+            />
+          </div>
+
+          <div>
+            <h2 className="text-lg font-medium text-gray-700 mb-2">Completed Items</h2>
+            <BuyListItemView
+              items={completedItems}
+              onToggle={(id, completed) => updateItemMutation.mutate({ id, completed: !completed } as BuyListItem)}
+              onDelete={(id) => deleteItemMutation.mutate(id)}
+              onUpdate={(item) => updateItemMutation.mutate(item)}
+            />
+          </div>
+        </div>
+      )}
     </div>
-  );
+  )
+
+  return (
+    <AppPage
+      title="Buy List"
+      content={content}
+    />
+  )
 }

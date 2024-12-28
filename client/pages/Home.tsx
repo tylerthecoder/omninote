@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import styles from './Home.module.css'
 
 interface NavButton {
   to: string
@@ -11,16 +10,10 @@ interface NavButton {
 export function Home() {
   const navigationButtons: NavButton[] = [
     {
-      to: "/today",
-      label: "Today",
+      to: "/daily",
+      label: "Daily",
       icon: "📅",
-      description: "Plan and track your day"
-    },
-    {
-      to: "/past-days",
-      label: "Past Days",
-      icon: "📚",
-      description: "Review previous days"
+      description: "Plan your day and review past days"
     },
     {
       to: "/todos",
@@ -69,24 +62,44 @@ export function Home() {
       label: "Movies",
       icon: "🎬",
       description: "Movies to watch and reviews"
+    },
+    {
+      to: "/weekend-projects",
+      label: "Weekend Projects",
+      icon: "🔨",
+      description: "Weekend project ideas and tracking"
+    },
+    {
+      to: "/techies",
+      label: "Techies",
+      icon: "💻",
+      description: "Tech people to follow and learn from"
     }
   ]
 
   return (
-    <div className={styles.homeContainer}>
-      <h1>TylerNote</h1>
-      <div className={styles.buttonGrid}>
-        {navigationButtons.map((button) => (
-          <Link
-            key={button.to}
-            to={button.to}
-            className={styles.navButton}
-          >
-            <span className={styles.icon}>{button.icon}</span>
-            <span className={styles.label}>{button.label}</span>
-            <span className={styles.description}>{button.description}</span>
-          </Link>
-        ))}
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-4xl font-bold text-center mb-12 text-gray-800">TylerNote</h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {navigationButtons.map((button) => (
+            <Link
+              key={button.to}
+              to={button.to}
+              className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 flex flex-col items-center text-center group"
+            >
+              <span className="text-4xl mb-4 transform group-hover:scale-110 transition-transform duration-200">
+                {button.icon}
+              </span>
+              <span className="text-lg font-semibold text-gray-800 mb-2">
+                {button.label}
+              </span>
+              <span className="text-sm text-gray-600">
+                {button.description}
+              </span>
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   )

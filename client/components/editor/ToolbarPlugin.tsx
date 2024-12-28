@@ -65,8 +65,6 @@ import {
   MdNotes,
 } from "react-icons/md";
 
-import styles from './toolbar.module.css';
-
 const LowPriority = 1;
 
 const supportedBlockTypes = new Set([
@@ -93,7 +91,7 @@ const blockTypeToBlockName = {
 };
 
 function Divider() {
-  return <div className={styles.divider} />;
+  return <div className="w-px bg-gray-200 mx-1" />;
 }
 
 function positionEditorElement(editor, rect) {
@@ -204,11 +202,11 @@ function FloatingLinkEditor({ editor }) {
   }, [isEditMode]);
 
   return (
-    <div ref={editorRef} className={styles.linkEditor}>
+    <div ref={editorRef} className="absolute z-50 -top-[10000px] -left-[10000px] mt-[-6px] max-w-[300px] w-full opacity-0 bg-white shadow-lg rounded-lg transition-opacity duration-500">
       {isEditMode ? (
         <input
           ref={inputRef}
-          className={styles.linkInput}
+          className="block w-[calc(100%-24px)] box-border mx-3 my-2 p-2 rounded-2xl bg-gray-100 text-sm text-gray-900 border-0 outline-0 relative font-inherit"
           value={linkUrl}
           onChange={(event) => {
             setLinkUrl(event.target.value);
@@ -230,12 +228,12 @@ function FloatingLinkEditor({ editor }) {
         />
       ) : (
         <>
-          <div className={styles.linkInput}>
-            <a href={linkUrl} target="_blank" rel="noopener noreferrer" className={styles.linkInputLink}>
+          <div className="block w-[calc(100%-24px)] box-border mx-3 my-2 p-2 rounded-2xl bg-gray-100 text-sm text-gray-900">
+            <a href={linkUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 no-underline block whitespace-nowrap overflow-hidden mr-8 text-ellipsis">
               {linkUrl}
             </a>
             <div
-              className={styles.linkEdit}
+              className="bg-[url('images/icons/pencil-fill.svg')] bg-no-repeat bg-center bg-[length:16px] w-[35px] absolute right-0 top-0 bottom-0 cursor-pointer"
               role="button"
               tabIndex={0}
               onMouseDown={(event) => event.preventDefault()}
@@ -252,7 +250,7 @@ function FloatingLinkEditor({ editor }) {
 
 function Select({ onChange, className, options, value }) {
   return (
-    <select className={`${styles.toolbarSelect} ${className}`} onChange={onChange} value={value}>
+    <select className={`border-0 flex bg-none rounded-lg p-2 align-middle appearance-none w-[70px] text-sm text-gray-600 text-ellipsis ${className}`} onChange={onChange} value={value}>
       <option hidden={true} value="" />
       {options.map((option) => (
         <option key={option} value={option}>
@@ -402,41 +400,34 @@ function BlockOptionsDropdownList({
   };
 
   return (
-    <div className={styles.dropdown} ref={dropDownRef}>
-      <button className={styles.dropdownItem} onClick={formatParagraph}>
-        <span className={`${styles.icon} ${styles.paragraph}`} />
-        <span className={styles.dropdownItemText}>Normal</span>
-        {blockType === "paragraph" && <span className={styles.active} />}
+    <div className="z-10 block absolute shadow-lg rounded-lg min-w-[100px] min-h-[40px] bg-white" ref={dropDownRef}>
+      <button className="mx-2 my-0 p-2 text-gray-900 cursor-pointer leading-4 text-sm flex items-center flex-row flex-shrink-0 justify-between bg-white rounded-lg border-0 min-w-[268px] hover:bg-gray-100 first:mt-2 last:mb-2" onClick={formatParagraph}>
+        <span className="flex leading-5 flex-grow w-[200px]">Normal</span>
+        {blockType === "paragraph" && <span className="active" />}
       </button>
-      <button className={styles.dropdownItem} onClick={formatLargeHeading}>
-        <span className={`${styles.icon} ${styles.largeHeading}`} />
-        <span className={styles.dropdownItemText}>Large Heading</span>
-        {blockType === "h1" && <span className={styles.active} />}
+      <button className="mx-2 my-0 p-2 text-gray-900 cursor-pointer leading-4 text-sm flex items-center flex-row flex-shrink-0 justify-between bg-white rounded-lg border-0 min-w-[268px] hover:bg-gray-100 first:mt-2 last:mb-2" onClick={formatLargeHeading}>
+        <span className="flex leading-5 flex-grow w-[200px]">Large Heading</span>
+        {blockType === "h1" && <span className="active" />}
       </button>
-      <button className={styles.dropdownItem} onClick={formatSmallHeading}>
-        <span className={`${styles.icon} ${styles.smallHeading}`} />
-        <span className={styles.dropdownItemText}>Small Heading</span>
-        {blockType === "h2" && <span className={styles.active} />}
+      <button className="mx-2 my-0 p-2 text-gray-900 cursor-pointer leading-4 text-sm flex items-center flex-row flex-shrink-0 justify-between bg-white rounded-lg border-0 min-w-[268px] hover:bg-gray-100 first:mt-2 last:mb-2" onClick={formatSmallHeading}>
+        <span className="flex leading-5 flex-grow w-[200px]">Small Heading</span>
+        {blockType === "h2" && <span className="active" />}
       </button>
-      <button className={styles.dropdownItem} onClick={formatBulletList}>
-        <span className={`${styles.icon} ${styles.bulletList}`} />
-        <span className={styles.dropdownItemText}>Bullet List</span>
-        {blockType === "ul" && <span className={styles.active} />}
+      <button className="mx-2 my-0 p-2 text-gray-900 cursor-pointer leading-4 text-sm flex items-center flex-row flex-shrink-0 justify-between bg-white rounded-lg border-0 min-w-[268px] hover:bg-gray-100 first:mt-2 last:mb-2" onClick={formatBulletList}>
+        <span className="flex leading-5 flex-grow w-[200px]">Bullet List</span>
+        {blockType === "ul" && <span className="active" />}
       </button>
-      <button className={styles.dropdownItem} onClick={formatNumberedList}>
-        <span className={`${styles.icon} ${styles.numberedList}`} />
-        <span className={styles.dropdownItemText}>Numbered List</span>
-        {blockType === "ol" && <span className={styles.active} />}
+      <button className="mx-2 my-0 p-2 text-gray-900 cursor-pointer leading-4 text-sm flex items-center flex-row flex-shrink-0 justify-between bg-white rounded-lg border-0 min-w-[268px] hover:bg-gray-100 first:mt-2 last:mb-2" onClick={formatNumberedList}>
+        <span className="flex leading-5 flex-grow w-[200px]">Numbered List</span>
+        {blockType === "ol" && <span className="active" />}
       </button>
-      <button className={styles.dropdownItem} onClick={formatQuote}>
-        <span className={`${styles.icon} ${styles.quote}`} />
-        <span className={styles.dropdownItemText}>Quote</span>
-        {blockType === "quote" && <span className={styles.active} />}
+      <button className="mx-2 my-0 p-2 text-gray-900 cursor-pointer leading-4 text-sm flex items-center flex-row flex-shrink-0 justify-between bg-white rounded-lg border-0 min-w-[268px] hover:bg-gray-100 first:mt-2 last:mb-2" onClick={formatQuote}>
+        <span className="flex leading-5 flex-grow w-[200px]">Quote</span>
+        {blockType === "quote" && <span className="active" />}
       </button>
-      <button className={styles.dropdownItem} onClick={formatCode}>
-        <span className={`${styles.icon} ${styles.code}`} />
-        <span className={styles.dropdownItemText}>Code Block</span>
-        {blockType === "code" && <span className={styles.active} />}
+      <button className="mx-2 my-0 p-2 text-gray-900 cursor-pointer leading-4 text-sm flex items-center flex-row flex-shrink-0 justify-between bg-white rounded-lg border-0 min-w-[268px] hover:bg-gray-100 first:mt-2 last:mb-2" onClick={formatCode}>
+        <span className="flex leading-5 flex-grow w-[200px]">Code Block</span>
+        {blockType === "code" && <span className="active" />}
       </button>
     </div>
   );
@@ -564,46 +555,46 @@ export default function ToolbarPlugin() {
   }, [editor, isLink]);
 
   return (
-    <div className={styles.toolbar} ref={toolbarRef}>
+    <div className="flex mb-px bg-white p-1 rounded-t-lg items-center" ref={toolbarRef}>
       <button
         disabled={!canUndo}
         onClick={() => {
           editor.dispatchCommand(UNDO_COMMAND);
         }}
-        className={`${styles.toolbarItem} ${styles.spaced}`}
+        className={`border-0 flex bg-none rounded-lg p-2 cursor-pointer items-center ${!canUndo && 'cursor-not-allowed opacity-50'} mr-0.5`}
         aria-label="Undo"
       >
-        <MdUndo />
+        <MdUndo className="w-5 h-5" />
       </button>
       <button
         disabled={!canRedo}
         onClick={() => {
           editor.dispatchCommand(REDO_COMMAND);
         }}
-        className={styles.toolbarItem}
+        className={`border-0 flex bg-none rounded-lg p-2 cursor-pointer items-center ${!canRedo && 'cursor-not-allowed opacity-50'}`}
         aria-label="Redo"
       >
-        <MdRedo />
+        <MdRedo className="w-5 h-5" />
       </button>
       <Divider />
       {supportedBlockTypes.has(blockType) && (
         <>
           <button
-            className={`${styles.toolbarItem} ${styles.blockControls}`}
+            className="border-0 flex bg-none rounded-lg p-2 cursor-pointer items-center"
             onClick={() =>
               setShowBlockOptionsDropDown(!showBlockOptionsDropDown)
             }
             aria-label="Formatting Options"
           >
-            {blockType === 'paragraph' && <MdNotes />}
-            {blockType === 'h1' && <MdTitle />}
-            {blockType === 'h2' && <MdSubtitles />}
-            {blockType === 'ul' && <MdFormatListBulleted />}
-            {blockType === 'ol' && <MdFormatListNumbered />}
-            {blockType === 'quote' && <MdFormatQuote />}
-            {blockType === 'code' && <MdCode />}
-            <span className={styles.toolbarText}>{blockTypeToBlockName[blockType]}</span>
-            <MdArrowDropDown />
+            {blockType === 'paragraph' && <MdNotes className="w-5 h-5" />}
+            {blockType === 'h1' && <MdTitle className="w-5 h-5" />}
+            {blockType === 'h2' && <MdSubtitles className="w-5 h-5" />}
+            {blockType === 'ul' && <MdFormatListBulleted className="w-5 h-5" />}
+            {blockType === 'ol' && <MdFormatListNumbered className="w-5 h-5" />}
+            {blockType === 'quote' && <MdFormatQuote className="w-5 h-5" />}
+            {blockType === 'code' && <MdCode className="w-5 h-5" />}
+            <span className="flex leading-5 w-[200px] text-sm text-gray-600 overflow-hidden h-5 text-left">{blockTypeToBlockName[blockType]}</span>
+            <MdArrowDropDown className="w-5 h-5" />
           </button>
           {showBlockOptionsDropDown &&
             createPortal(
@@ -621,7 +612,7 @@ export default function ToolbarPlugin() {
       {blockType === "code" ? (
         <>
           <Select
-            className={`${styles.toolbarSelect} ${styles.codeLanguage}`}
+            className="w-[130px] capitalize"
             onChange={onCodeLanguageSelect}
             options={codeLanguges}
             value={codeLanguage}
@@ -634,53 +625,53 @@ export default function ToolbarPlugin() {
             onClick={() => {
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
             }}
-            className={`${styles.toolbarItem} ${styles.spaced} ${isBold ? styles.active : ""}`}
+            className={`border-0 flex bg-none rounded-lg p-2 cursor-pointer items-center mr-0.5 ${isBold ? 'bg-blue-50' : ''} hover:bg-gray-100`}
             aria-label="Format Bold"
           >
-            <MdFormatBold />
+            <MdFormatBold className={`w-5 h-5 ${isBold ? 'fill-primary' : ''}`} />
           </button>
           <button
             onClick={() => {
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
             }}
-            className={`${styles.toolbarItem} ${styles.spaced} ${isItalic ? styles.active : ""}`}
+            className={`border-0 flex bg-none rounded-lg p-2 cursor-pointer items-center mr-0.5 ${isItalic ? 'bg-blue-50' : ''} hover:bg-gray-100`}
             aria-label="Format Italics"
           >
-            <MdFormatItalic />
+            <MdFormatItalic className={`w-5 h-5 ${isItalic ? 'fill-primary' : ''}`} />
           </button>
           <button
             onClick={() => {
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline");
             }}
-            className={`${styles.toolbarItem} ${styles.spaced} ${isUnderline ? styles.active : ""}`}
+            className={`border-0 flex bg-none rounded-lg p-2 cursor-pointer items-center mr-0.5 ${isUnderline ? 'bg-blue-50' : ''} hover:bg-gray-100`}
             aria-label="Format Underline"
           >
-            <MdFormatUnderlined />
+            <MdFormatUnderlined className={`w-5 h-5 ${isUnderline ? 'fill-primary' : ''}`} />
           </button>
           <button
             onClick={() => {
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough");
             }}
-            className={`${styles.toolbarItem} ${styles.spaced} ${isStrikethrough ? styles.active : ""}`}
+            className={`border-0 flex bg-none rounded-lg p-2 cursor-pointer items-center mr-0.5 ${isStrikethrough ? 'bg-blue-50' : ''} hover:bg-gray-100`}
             aria-label="Format Strikethrough"
           >
-            <MdStrikethroughS />
+            <MdStrikethroughS className={`w-5 h-5 ${isStrikethrough ? 'fill-primary' : ''}`} />
           </button>
           <button
             onClick={() => {
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, "code");
             }}
-            className={`${styles.toolbarItem} ${styles.spaced} ${isCode ? styles.active : ""}`}
+            className={`border-0 flex bg-none rounded-lg p-2 cursor-pointer items-center mr-0.5 ${isCode ? 'bg-blue-50' : ''} hover:bg-gray-100`}
             aria-label="Insert Code"
           >
-            <MdCode />
+            <MdCode className={`w-5 h-5 ${isCode ? 'fill-primary' : ''}`} />
           </button>
           <button
             onClick={insertLink}
-            className={`${styles.toolbarItem} ${styles.spaced} ${isLink ? styles.active : ""}`}
+            className={`border-0 flex bg-none rounded-lg p-2 cursor-pointer items-center mr-0.5 ${isLink ? 'bg-blue-50' : ''} hover:bg-gray-100`}
             aria-label="Insert Link"
           >
-            <MdLink />
+            <MdLink className={`w-5 h-5 ${isLink ? 'fill-primary' : ''}`} />
           </button>
           {isLink &&
             createPortal(<FloatingLinkEditor editor={editor} />, document.body)}
@@ -689,38 +680,38 @@ export default function ToolbarPlugin() {
             onClick={() => {
               editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "left");
             }}
-            className={`${styles.toolbarItem} ${styles.spaced}`}
+            className="border-0 flex bg-none rounded-lg p-2 cursor-pointer items-center mr-0.5 hover:bg-gray-100"
             aria-label="Left Align"
           >
-            <MdFormatAlignLeft />
+            <MdFormatAlignLeft className="w-5 h-5" />
           </button>
           <button
             onClick={() => {
               editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "center");
             }}
-            className={`${styles.toolbarItem} ${styles.spaced}`}
+            className="border-0 flex bg-none rounded-lg p-2 cursor-pointer items-center mr-0.5 hover:bg-gray-100"
             aria-label="Center Align"
           >
-            <MdFormatAlignCenter />
+            <MdFormatAlignCenter className="w-5 h-5" />
           </button>
           <button
             onClick={() => {
               editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "right");
             }}
-            className={`${styles.toolbarItem} ${styles.spaced}`}
+            className="border-0 flex bg-none rounded-lg p-2 cursor-pointer items-center mr-0.5 hover:bg-gray-100"
             aria-label="Right Align"
           >
-            <MdFormatAlignRight />
+            <MdFormatAlignRight className="w-5 h-5" />
           </button>
           <button
             onClick={() => {
               editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "justify");
             }}
-            className={styles.toolbarItem}
+            className="border-0 flex bg-none rounded-lg p-2 cursor-pointer items-center hover:bg-gray-100"
             aria-label="Justify Align"
           >
-            <MdFormatAlignJustify />
-          </button>{" "}
+            <MdFormatAlignJustify className="w-5 h-5" />
+          </button>
         </>
       )}
     </div>

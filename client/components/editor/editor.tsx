@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useCallback, memo } from 'react';
 import { InitialConfigType, LexicalComposer } from '@lexical/react/LexicalComposer';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
@@ -12,7 +12,7 @@ import {
 } from '@lexical/markdown';
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
-import ToolbarPlugin from "../lexical-plugins/ToolbarPlugin";
+import ToolbarPlugin from "./ToolbarPlugin";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
 import { ListItemNode, ListNode } from "@lexical/list";
@@ -23,11 +23,6 @@ import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
 import { TabIndentationPlugin } from '@lexical/react/LexicalTabIndentationPlugin';
 import { EditorState, EditorThemeClasses } from 'lexical';
-import styles from './editor.module.css';
-
-// import ListMaxIndentLevelPlugin from "./lexical-plugins/ListMaxIndentLevelPlugin";
-// import CodeHighlightPlugin from "./lexical-plugins/CodeHighlightPlugin";
-// import AutoLinkPlugin from "./lexical-plugins/AutoLinkPlugin";
 
 interface EditorProps {
   text: string;
@@ -35,59 +30,58 @@ interface EditorProps {
 }
 
 const theme: EditorThemeClasses = {
-  ltr: styles.ltr,
-  rtl: styles.rtl,
-  placeholder: styles.editorPlaceholder,
-  // Remove paragraph, quote, and heading styles
+  ltr: 'text-left',
+  rtl: 'text-right',
+  placeholder: 'text-gray-400 absolute overflow-hidden text-ellipsis top-[15px] left-[10px] text-[15px] select-none inline-block pointer-events-none',
   list: {
     nested: {
-      listitem: styles.editorNestedListitem
+      listitem: 'list-none'
     },
-    ol: styles.editorListOl,
-    ul: styles.editorListUl,
-    listitem: styles.editorListitem
+    ol: 'list-decimal pl-5',
+    ul: 'list-disc pl-5',
+    listitem: 'my-1'
   },
-  link: styles.editorLink,
+  link: 'text-blue-600 no-underline',
   text: {
-    bold: styles.editorTextBold,
-    italic: styles.editorTextItalic,
-    underline: styles.editorTextUnderline,
-    strikethrough: styles.editorTextStrikethrough,
-    underlineStrikethrough: styles.editorTextUnderlineStrikethrough,
-    code: styles.editorTextCode
+    bold: 'font-bold',
+    italic: 'italic',
+    underline: 'underline',
+    strikethrough: 'line-through',
+    underlineStrikethrough: 'underline line-through',
+    code: 'bg-gray-100 px-1 py-[1px] font-mono text-[94%]'
   },
-  code: styles.editorCode,
+  code: 'bg-gray-100 font-mono block p-2 pl-[52px] leading-[1.53] text-[13px] my-2 tab-[2] overflow-x-auto relative',
   codeHighlight: {
-    atrule: styles.editorTokenAttr,
-    attr: styles.editorTokenAttr,
-    boolean: styles.editorTokenProperty,
-    builtin: styles.editorTokenSelector,
-    cdata: styles.editorTokenComment,
-    char: styles.editorTokenSelector,
-    class: styles.editorTokenFunction,
-    "class-name": styles.editorTokenFunction,
-    comment: styles.editorTokenComment,
-    constant: styles.editorTokenProperty,
-    deleted: styles.editorTokenProperty,
-    doctype: styles.editorTokenComment,
-    entity: styles.editorTokenOperator,
-    function: styles.editorTokenFunction,
-    important: styles.editorTokenVariable,
-    inserted: styles.editorTokenSelector,
-    keyword: styles.editorTokenAttr,
-    namespace: styles.editorTokenVariable,
-    number: styles.editorTokenProperty,
-    operator: styles.editorTokenOperator,
-    prolog: styles.editorTokenComment,
-    property: styles.editorTokenProperty,
-    punctuation: styles.editorTokenPunctuation,
-    regex: styles.editorTokenVariable,
-    selector: styles.editorTokenSelector,
-    string: styles.editorTokenSelector,
-    symbol: styles.editorTokenProperty,
-    tag: styles.editorTokenProperty,
-    url: styles.editorTokenOperator,
-    variable: styles.editorTokenVariable
+    atrule: 'text-[#07a]',
+    attr: 'text-[#07a]',
+    boolean: 'text-[#905]',
+    builtin: 'text-[#690]',
+    cdata: 'text-[slategray]',
+    char: 'text-[#690]',
+    class: 'text-[#dd4a68]',
+    'class-name': 'text-[#dd4a68]',
+    comment: 'text-[slategray]',
+    constant: 'text-[#905]',
+    deleted: 'text-[#905]',
+    doctype: 'text-[slategray]',
+    entity: 'text-[#9a6e3a]',
+    function: 'text-[#dd4a68]',
+    important: 'text-[#e90]',
+    inserted: 'text-[#690]',
+    keyword: 'text-[#07a]',
+    namespace: 'text-[#e90]',
+    number: 'text-[#905]',
+    operator: 'text-[#9a6e3a]',
+    prolog: 'text-[slategray]',
+    property: 'text-[#905]',
+    punctuation: 'text-[#999]',
+    regex: 'text-[#e90]',
+    selector: 'text-[#690]',
+    string: 'text-[#690]',
+    symbol: 'text-[#905]',
+    tag: 'text-[#905]',
+    url: 'text-[#9a6e3a]',
+    variable: 'text-[#e90]'
   }
 };
 
@@ -126,7 +120,6 @@ export function Editor({ text, onTextChange }: EditorProps) {
     });
   };
 
-
   const editorConfig: InitialConfigType = {
     namespace: 'PlanEditor',
     theme,
@@ -150,11 +143,11 @@ export function Editor({ text, onTextChange }: EditorProps) {
 
   return (
     <LexicalComposer initialConfig={editorConfig}>
-      <div className={styles.editorContainer}>
+      <div className="m-0 max-w-none w-full text-black relative leading-5 font-normal text-left p-0 flex flex-col">
         <ToolbarPlugin />
-        <div className={styles.editorInner}>
+        <div className="bg-white relative flex-grow overflow-y-auto">
           <RichTextPlugin
-            contentEditable={<ContentEditable />}
+            contentEditable={<ContentEditable className="p-4" />}
             ErrorBoundary={LexicalErrorBoundary}
           />
           <MyCustomAutoFocusPlugin />
@@ -171,3 +164,33 @@ export function Editor({ text, onTextChange }: EditorProps) {
     </LexicalComposer>
   );
 }
+
+interface MemoizedEditorProps {
+  initialText: string;
+  onTextChange: (text: string) => void;
+}
+
+export const MemoizedEditor = memo(function MemoizedEditor({ initialText, onTextChange }: MemoizedEditorProps) {
+  const editorRef = useRef<{ text: string }>({ text: initialText });
+
+  useEffect(() => {
+    // Initialize the editor text once
+    editorRef.current.text = initialText;
+  }, []); // Empty deps array means this only runs once on mount
+
+  const handleTextChange = useCallback((newText: string) => {
+    // Update our ref first
+    editorRef.current.text = newText;
+    onTextChange(newText);
+  }, [onTextChange]);
+
+  return (
+    <Editor
+      text={editorRef.current.text}
+      onTextChange={handleTextChange}
+    />
+  );
+}, () => {
+  // Always return true to prevent any rerenders
+  return true;
+});

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Route, Routes } from 'react-router-dom';
 import { trpc } from '../trpc';
-import { Editor } from '../editor/editor';
+import { MemoizedEditor } from '../components/editor/editor';
 import { Debouncer, DebouncerStatus } from '../utils';
 import type { Techie } from 'tt-services';
 
@@ -194,7 +194,10 @@ function TechieEdit() {
                 </div>
 
                 <div className="flex-1">
-                    <Editor text={techie.content} onTextChange={handleContentChange} />
+                    <MemoizedEditor
+                        initialText={techie.content}
+                        onTextChange={handleContentChange}
+                    />
                 </div>
                 <p>Status: {syncStatus}</p>
             </div>

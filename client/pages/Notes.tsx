@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams, Route, Routes } from 'react-router-dom'
 import { trpc } from '../trpc'
-import { Editor } from '../editor/editor'
+import { MemoizedEditor } from '../components/editor/editor'
 import { Debouncer, DebouncerStatus } from '../utils'
 import ReactMarkdown from 'react-markdown'
 import { Note } from 'tt-services'
@@ -11,7 +11,6 @@ import { ItemList } from '../components/ItemList'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { IoMdAdd, IoMdEye, IoMdCreate, IoMdTrash, IoMdMegaphone, IoMdLock, IoMdTime, IoMdCalendar, IoMdDocument } from 'react-icons/io'
 import { NoteDetails } from '../components/NoteDetails'
-import { MemoizedEditor } from '../components/MemoizedEditor'
 
 const debouncer = new Debouncer(500)
 
@@ -206,10 +205,12 @@ function NoteEdit() {
         onRemoveTag={(tag) => removeTagMutation.mutate(tag)}
       />
       <div className="bg-white shadow p-6">
-        <MemoizedEditor
-          initialText={note.content}
-          onTextChange={(text) => updateNoteContentMutation.mutate(text)}
-        />
+        <div className="space-y-4">
+          <MemoizedEditor
+            initialText={note.content}
+            onTextChange={(text) => updateNoteContentMutation.mutate(text)}
+          />
+        </div>
       </div>
     </div>
   ) : null

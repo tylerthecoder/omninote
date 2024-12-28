@@ -1,282 +1,253 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams, Route, Routes } from 'react-router-dom';
-import { trpc } from '../trpc';
-import { Debouncer, DebouncerStatus } from '../utils';
-import { Editor } from '../editor/editor';
-import styles from './ReadingList.module.css';
-import { ReadingListItem } from 'tt-services';
+import { useState } from 'react'
+import { useNavigate, useParams, Route, Routes } from 'react-router-dom'
+import { trpc } from '../trpc'
+import { ReadingListItem } from 'tt-services'
+import { AppPage } from '../layout/AppPage'
+import { ReadingListItemView } from '../components/ReadingListItemView'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { IoMdAdd, IoMdArrowBack } from 'react-icons/io'
+import { MemoizedEditor } from '../components/editor/editor'
+import { Debouncer, DebouncerStatus } from '../utils'
 
-const debouncer = new Debouncer(500);
+const debouncer = new Debouncer(500)
 
-const prettySyncStatus = (status: DebouncerStatus) => {
-  switch (status) {
-    case 'not-synced':
-      return 'Not synced';
-    case 'synced':
-      return 'Synced';
-    case 'syncing':
-      return 'Syncing...';
-    case 'error':
-      return 'Error';
-  }
-};
+function ReadingListMain() {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
-export function ReadingList() {
-  const [items, setItems] = useState<ReadingListItem[]>([]);
-  const [newItemName, setNewItemName] = useState('');
-  const [newItemUrl, setNewItemUrl] = useState('');
-  const [newItemType, setNewItemType] = useState<'article' | 'book'>('article');
-  const [editingItem, setEditingItem] = useState<ReadingListItem | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [syncStatus, setSyncStatus] = useState<DebouncerStatus>('synced');
-  const navigate = useNavigate();
+  const { data: items, isLoading, error } = useQuery({
+    queryKey: ['readingList'],
+    queryFn: () => trpc.getAllReadingListItems.query(),
+  })
 
-  useEffect(() => {
-    debouncer.addStatusChangeListener((status) => {
-      setSyncStatus(status);
-    });
-
-    fetchReadingList();
-
-    return () => {
-      debouncer.clear();
-    };
-  }, []);
-
-  const fetchReadingList = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const fetchedItems = await trpc.getAllReadingListItems.query();
-      setItems(fetchedItems);
-    } catch (error) {
-      console.error('Error fetching reading list:', error);
-      setError('Failed to fetch reading list. Please try again later.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCreateItem = async () => {
-    if (!newItemName.trim()) return;
-
-    setError(null);
-    try {
-      const newItem = await trpc.createReadingListItem.mutate({
-        name: newItemName.trim(),
-        url: newItemUrl.trim() || undefined,
-        type: newItemType,
-      });
-      setItems((prev) => [newItem, ...prev]);
-      setNewItemName('');
-      setNewItemUrl('');
-      setNewItemType('article');
-    } catch (error) {
-      console.error('Error creating reading list item:', error);
-      setError('Failed to create reading list item. Please try again later.');
-    }
-  };
-
-  const handleDeleteItem = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
-      try {
-        await trpc.deleteReadingListItem.mutate({ id });
-        setItems((prev) => prev.filter((item) => item.id !== id));
-      } catch (error) {
-        console.error('Error deleting reading list item:', error);
-        setError('Failed to delete reading list item. Please try again later.');
+  const deleteItemMutation = useMutation({
+    mutationFn: (id: string) => {
+      if (!window.confirm('Are you sure you want to delete this item?')) {
+        throw new Error('Delete cancelled')
       }
-    }
-  };
+      return trpc.deleteReadingListItem.mutate({ id })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['readingList'] })
+    },
+  })
 
-  const handleEditItem = (item: ReadingListItem) => {
-    setEditingItem(item);
-  };
+  const content = (
+    <div className="space-y-6">
+      {(error || deleteItemMutation.error) && (
+        <div className="error-message">
+          {error?.message || deleteItemMutation.error?.message}
+        </div>
+      )}
 
-  const handleUpdateItem = async () => {
-    if (!editingItem) return;
-
-    setError(null);
-    try {
-      const updatedItem = await trpc.updateReadingListItem.mutate({
-        id: editingItem.id,
-        name: editingItem.name.trim(),
-        url: editingItem.url?.trim() || undefined,
-        type: editingItem.type,
-      });
-      setItems((prev) => prev.map((item) => (item.id === updatedItem.id ? updatedItem : item)));
-      setEditingItem(null);
-    } catch (error) {
-      console.error('Error updating reading list item:', error);
-      setError('Failed to update reading list item. Please try again later.');
-    }
-  };
-
-  const handleOpenNotes = (item: ReadingListItem) => {
-    navigate(`/reading-list/notes/${item.id}`);
-  };
-
-  if (isLoading) return <p>Loading...</p>;
-  if (error) return <div className="error-message">{error}</div>;
+      {isLoading ? (
+        <div className="loading-message">Loading...</div>
+      ) : (
+        <ReadingListItemView
+          items={items || []}
+          onDelete={(id) => deleteItemMutation.mutate(id)}
+          onUpdate={(item) => navigate(`/reading-list/edit/${item.id}`)}
+          onOpenNotes={(item) => navigate(`/reading-list/notes/${item.id}`)}
+        />
+      )}
+    </div>
+  )
 
   return (
-    <div className="container">
-      <h1>Reading List</h1>
-      {error && <div className="error-message">{error}</div>}
-      <div className={styles.addItemForm}>
-        <input
-          type="text"
-          value={newItemName}
-          onChange={(e) => setNewItemName(e.target.value)}
-          placeholder="Item name"
-          className={styles.input}
-        />
-        <input
-          type="url"
-          value={newItemUrl}
-          onChange={(e) => setNewItemUrl(e.target.value)}
-          placeholder="URL (optional)"
-          className={styles.input}
-        />
-        <select
-          value={newItemType}
-          onChange={(e) => setNewItemType(e.target.value as 'article' | 'book')}
-          className={styles.input}
+    <AppPage
+      title="Reading List"
+      content={content}
+      actions={
+        <button
+          onClick={() => navigate('/reading-list/new')}
+          className="btn btn-primary flex items-center gap-2"
         >
-          <option value="article">Article</option>
-          <option value="book">Book</option>
-        </select>
-        <button onClick={handleCreateItem} className="btn btn-primary">
-          Add Item
+          <IoMdAdd className="w-5 h-5" />
+          New Item
         </button>
-      </div>
-      <ul className={styles.itemList}>
-        {items.map((item) => (
-          <li key={item.id} className={styles.item}>
-            {editingItem && editingItem.id === item.id ? (
-              <div className={styles.editItemForm}>
-                <input
-                  type="text"
-                  value={editingItem.name}
-                  onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
-                  className={styles.input}
-                />
-                <input
-                  type="url"
-                  value={editingItem.url || ''}
-                  onChange={(e) => setEditingItem({ ...editingItem, url: e.target.value })}
-                  className={styles.input}
-                />
-                <select
-                  value={editingItem.type}
-                  onChange={(e) => setEditingItem({ ...editingItem, type: e.target.value as 'article' | 'book' })}
-                  className={styles.input}
-                >
-                  <option value="article">Article</option>
-                  <option value="book">Book</option>
-                </select>
-                <button onClick={handleUpdateItem} className="btn btn-primary">
-                  Update
-                </button>
-                <button onClick={() => setEditingItem(null)} className="btn btn-danger">
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className={styles.itemContent}>
-                  <span className={styles.itemName}>{item.name}</span>
-                  <span className={styles.itemType}>{item.type}</span>
-                  {item.url && (
-                    <a href={item.url} target="_blank" rel="noopener noreferrer" className={styles.itemUrl}>
-                      Link
-                    </a>
-                  )}
-                </div>
-                <div className={styles.itemActions}>
-                  <button onClick={() => handleEditItem(item)} className="btn btn-info">
-                    Edit
-                  </button>
-                  <button onClick={() => handleOpenNotes(item)} className="btn btn-primary">
-                    Notes
-                  </button>
-                  <button onClick={() => handleDeleteItem(item.id)} className="btn btn-danger">
-                    Delete
-                  </button>
-                </div>
-              </>
-            )}
-          </li>
-        ))}
-      </ul>
-      <p className={styles.syncStatus}>Status: {prettySyncStatus(syncStatus)}</p>
-    </div>
-  );
+      }
+    />
+  )
 }
 
-export function ReadingListNotes() {
-  const { id } = useParams<{ id: string }>();
-  const [item, setItem] = useState<ReadingListItem | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [syncStatus, setSyncStatus] = useState<DebouncerStatus>('synced');
-  const navigate = useNavigate();
+function NewReadingListItem() {
+  const [newItem, setNewItem] = useState({
+    name: '',
+    url: '',
+    type: 'article' as 'article' | 'book',
+  })
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
-  useEffect(() => {
-    debouncer.addStatusChangeListener((status) => {
-      setSyncStatus(status);
-    });
+  const createItemMutation = useMutation({
+    mutationFn: (item: { name: string; url?: string; type: 'article' | 'book' }) =>
+      trpc.createReadingListItem.mutate(item),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['readingList'] })
+      navigate('/reading-list')
+    },
+  })
 
-    const fetchItem = async () => {
-      try {
-        const fetchedItem = await trpc.getReadingListItem.query({ id: id! });
-        setItem(fetchedItem);
-      } catch (error) {
-        console.error('Error fetching reading list item:', error);
-        setError('Failed to fetch reading list item. Please try again later.');
-      }
-    };
-    fetchItem();
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (newItem.name.trim()) {
+      createItemMutation.mutate({
+        name: newItem.name.trim(),
+        url: newItem.url.trim() || undefined,
+        type: newItem.type,
+      })
+    }
+  }
 
-    return () => {
-      debouncer.clear();
-    };
-  }, [id]);
+  const content = (
+    <div className="space-y-6">
+      <div className="bg-white shadow p-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Title
+            </label>
+            <input
+              type="text"
+              value={newItem.name}
+              onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+              placeholder="Item name"
+              className="w-full"
+              required
+            />
+          </div>
 
-  const handleNotesChange = (newNotes: string) => {
-    if (!item) return;
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              URL (optional)
+            </label>
+            <input
+              type="url"
+              value={newItem.url}
+              onChange={(e) => setNewItem({ ...newItem, url: e.target.value })}
+              placeholder="https://..."
+              className="w-full"
+            />
+          </div>
 
-    setItem(prev => prev ? { ...prev, notes: newNotes } : null);
-    debouncer.debounce('updateNotes', async () => {
-      try {
-        await trpc.updateReadingListItem.mutate({ id: item.id, notes: newNotes });
-      } catch (error) {
-        console.error('Error updating reading list item notes:', error);
-        setError('Failed to update notes. Please try again later.');
-      }
-    });
-  };
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Type
+            </label>
+            <select
+              value={newItem.type}
+              onChange={(e) => setNewItem({ ...newItem, type: e.target.value as 'article' | 'book' })}
+              className="w-full"
+            >
+              <option value="article">Article</option>
+              <option value="book">Book</option>
+            </select>
+          </div>
 
-  if (error) return <div className="error-message">{error}</div>;
-  if (!item) return <p>Loading...</p>;
+          {createItemMutation.error && (
+            <div className="error-message">
+              {createItemMutation.error.message}
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => navigate('/reading-list')}
+              className="btn btn-danger"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!newItem.name.trim() || createItemMutation.isPending}
+              className="btn btn-primary"
+            >
+              Create Item
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
 
   return (
-    <div className="container">
-      <header className={styles.header}>
-        <button onClick={() => navigate('/reading-list')} className="btn btn-nav">⬅️</button>
-        <h1>Notes: {item.name}</h1>
-      </header>
-      <Editor text={item.notes || ''} onTextChange={handleNotesChange} />
-      <p className={styles.syncStatus}>Status: {prettySyncStatus(syncStatus)}</p>
+    <AppPage
+      title="New Reading List Item"
+      content={content}
+      showBack
+      backTo="/reading-list"
+    />
+  )
+}
+
+function ReadingListNotes() {
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const [syncStatus, setSyncStatus] = useState<DebouncerStatus>('synced')
+
+  const { data: item, error, isLoading } = useQuery({
+    queryKey: ['readingListItem', id],
+    queryFn: () => trpc.getReadingListItem.query({ id: id! }),
+    enabled: !!id,
+  })
+
+  const updateNotesMutation = useMutation({
+    mutationFn: (notes: string) => {
+      if (!id) throw new Error('Item ID is required')
+      setSyncStatus('syncing')
+      return new Promise<ReadingListItem>((resolve, reject) => {
+        debouncer.debounce('updateNotes', async () => {
+          try {
+            const result = await trpc.updateReadingListItem.mutate({ id, notes })
+            setSyncStatus('synced')
+            resolve(result)
+          } catch (error) {
+            setSyncStatus('error')
+            reject(error)
+          }
+        })
+      })
+    },
+    onSuccess: (updatedItem) => {
+      queryClient.setQueryData(['readingListItem', id], updatedItem)
+    },
+  })
+
+  const content = item ? (
+    <div className="space-y-6">
+      <div className="bg-white shadow p-6">
+        <MemoizedEditor
+          initialText={item.notes || ''}
+          onTextChange={(text) => updateNotesMutation.mutate(text)}
+        />
+      </div>
+      <p className="text-sm text-gray-500 italic">
+        Status: {syncStatus}
+      </p>
     </div>
-  );
+  ) : null
+
+  if (error) return <AppPage title="Error" content={<div className="error-message">{error.message}</div>} />
+  if (isLoading || !item) return <AppPage title="Loading..." content={<div className="loading-message">Loading...</div>} />
+
+  return (
+    <AppPage
+      title={`Notes: ${item.name}`}
+      content={content}
+      showBack
+      backTo="/reading-list"
+    />
+  )
 }
 
 export function ReadingListRouter() {
   return (
     <Routes>
-      <Route index element={<ReadingList />} />
+      <Route index element={<ReadingListMain />} />
+      <Route path="new" element={<NewReadingListItem />} />
       <Route path="notes/:id" element={<ReadingListNotes />} />
     </Routes>
-  );
+  )
 }
