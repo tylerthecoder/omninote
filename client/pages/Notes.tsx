@@ -1,298 +1,272 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate, useParams, Route, Routes } from 'react-router-dom'
 import { trpc } from '../trpc'
 import { Editor } from '../editor/editor'
 import { Debouncer, DebouncerStatus } from '../utils'
 import ReactMarkdown from 'react-markdown'
-import type { Note } from 'tt-services'
+import { Note } from 'tt-services'
+import { AppPage } from '../layout/AppPage'
+import { TagView } from '../components/TagView'
+import { ItemList } from '../components/ItemList'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { IoMdAdd, IoMdEye, IoMdCreate, IoMdTrash, IoMdMegaphone, IoMdLock, IoMdTime, IoMdCalendar, IoMdDocument } from 'react-icons/io'
+import { NoteDetails } from '../components/NoteDetails'
+import { MemoizedEditor } from '../components/MemoizedEditor'
 
 const debouncer = new Debouncer(500)
 
 function NotesList() {
-  const [notes, setNotes] = useState<Note[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
-  useEffect(() => {
-    fetchNotes()
-  }, [])
+  const { data: notes, isLoading, error } = useQuery({
+    queryKey: ['notes'],
+    queryFn: () => trpc.getAllNotes.query(),
+  })
 
-  const fetchNotes = async () => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const fetchedNotes = await trpc.getAllNotes.query()
-      setNotes(fetchedNotes)
-    } catch (error) {
-      console.error('Error fetching notes:', error)
-      setError('Failed to fetch notes. Please try again later.')
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const deleteNoteMutation = useMutation({
+    mutationFn: (id: string) => {
+      if (!window.confirm('Are you sure you want to delete this note?')) {
+        throw new Error('Delete cancelled')
+      }
+      return trpc.deleteNote.mutate({ id })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notes'] })
+    },
+  })
 
-  const handleCreateNote = async () => {
-    try {
-      const newNote = await trpc.createNote.mutate({
-        title: "New Note",
-        content: "Start writing...",
-        date: new Date().toISOString(),
-      })
-      navigate(`/notes/edit/${newNote.id}`)
-    } catch (error) {
-      console.error('Error creating note:', error)
-      setError('Failed to create note. Please try again later.')
-    }
-  }
+  const content = (
+    <>
+      {(error || deleteNoteMutation.error) && (
+        <div className="error-message">
+          {error?.message || deleteNoteMutation.error?.message}
+        </div>
+      )}
 
-  const handleDeleteNote = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this note?')) return
-
-    try {
-      await trpc.deleteNote.mutate({ id })
-      setNotes(notes.filter(note => note.id !== id))
-    } catch (error) {
-      console.error('Error deleting note:', error)
-      setError('Failed to delete note. Please try again later.')
-    }
-  }
-
-  if (isLoading) return <p>Loading...</p>
-  if (error) return <div className="error-message">{error}</div>
+      {isLoading ? (
+        <div className="loading-message">Loading...</div>
+      ) : (
+        <ItemList
+          items={notes?.map(note => ({
+            id: note.id,
+            title: note.title,
+            meta: (
+              <>
+                <span className="flex items-center gap-1">
+                  <IoMdCalendar className="w-4 h-4" />
+                  {new Date(note.date).toLocaleDateString()}
+                </span>
+                <span className="flex items-center gap-1">
+                  {note.published ? <IoMdMegaphone className="w-4 h-4" /> : <IoMdDocument className="w-4 h-4" />}
+                  {note.published ? 'Published' : 'Draft'}
+                </span>
+                {note.tags && <TagView tags={note.tags} />}
+              </>
+            ),
+            actions: (
+              <>
+                <button
+                  onClick={() => navigate(`/notes/view/${note.id}`)}
+                  className="btn btn-primary btn-sm"
+                  aria-label="View note"
+                >
+                  <IoMdEye className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => navigate(`/notes/edit/${note.id}`)}
+                  className="btn btn-info btn-sm"
+                  aria-label="Edit note"
+                >
+                  <IoMdCreate className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => deleteNoteMutation.mutate(note.id)}
+                  disabled={deleteNoteMutation.isPending}
+                  className="btn btn-danger btn-sm"
+                  aria-label="Delete note"
+                >
+                  <IoMdTrash className="w-4 h-4" />
+                </button>
+              </>
+            ),
+          })) || []}
+        />
+      )}
+    </>
+  )
 
   return (
-    <div className="container">
-      <h1>Notes</h1>
-      {error && <div className="error-message">{error}</div>}
-
-      <button onClick={handleCreateNote} className="btn btn-primary">New Note</button>
-
-      <ul className="list">
-        {notes.map(note => (
-          <li key={note.id} className="card">
-            <div className="card-content">
-              <div className="flex justify-between items-center">
-                <span className="card-title">{note.title}</span>
-                <div className="card-actions">
-                  <button onClick={() => navigate(`/notes/view/${note.id}`)} className="btn btn-primary btn-sm">View</button>
-                  <button onClick={() => navigate(`/notes/edit/${note.id}`)} className="btn btn-info btn-sm">Edit</button>
-                  <button onClick={() => handleDeleteNote(note.id)} className="btn btn-danger btn-sm">Delete</button>
-                </div>
-              </div>
-              <div className="card-meta">
-                <span>{new Date(note.date).toLocaleDateString()}</span>
-                <span className="ml-4">{note.published ? '📢 Published' : '📝 Draft'}</span>
-                {note.tags && note.tags.length > 0 &&
-                  note.tags.map(tag => (
-                    <span key={tag} className="bg-gray-200 px-2 py-0.5 rounded-full text-xs">#{tag}</span>
-                  ))
-                }
-              </div>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <AppPage
+      title="Notes"
+      content={content}
+      actions={
+        <button
+          onClick={() => navigate('/notes/new')}
+          className="btn btn-primary flex items-center gap-2"
+        >
+          <IoMdAdd className="w-5 h-5" />
+          New Note
+        </button>
+      }
+    />
   )
 }
 
 function NoteEdit() {
   const { id } = useParams<{ id: string }>()
-  const [note, setNote] = useState<Note | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const queryClient = useQueryClient()
   const [syncStatus, setSyncStatus] = useState<DebouncerStatus>('synced')
-  const navigate = useNavigate()
-  const [newTag, setNewTag] = useState('')
 
-  useEffect(() => {
-    debouncer.addStatusChangeListener(setSyncStatus)
+  const { data: note, error: fetchError } = useQuery({
+    queryKey: ['note', id],
+    queryFn: () => trpc.getNote.query({ id: id! }),
+    enabled: !!id,
+  })
 
-    const fetchNote = async () => {
-      try {
-        const fetchedNote = await trpc.getNote.query({ id: id! })
-        setNote(fetchedNote)
-      } catch (error) {
-        console.error('Error fetching note:', error)
-        setError('Failed to fetch note. Please try again later.')
-      }
-    }
+  const updateNoteTitleMutation = useMutation({
+    mutationFn: (title: string) => {
+      if (!id) throw new Error('Note ID is required')
+      return trpc.updateNote.mutate({ id, title })
+    },
+    onSuccess: (updatedNote) => {
+      queryClient.setQueryData(['note', id], (oldNote: Note) => ({
+        ...oldNote,
+        title: updatedNote.title,
+      }))
+    },
+  })
 
-    fetchNote()
-    return () => debouncer.clear()
-  }, [id])
+  const updateNoteContentMutation = useMutation({
+    mutationFn: (content: string) => {
+      if (!id) throw new Error('Note ID is required')
+      setSyncStatus('syncing')
+      return new Promise<Note>((resolve, reject) => {
+        debouncer.debounce('updateContent', async () => {
+          try {
+            const result = await trpc.updateNote.mutate({ id, content })
+            setSyncStatus('synced')
+            resolve(result)
+          } catch (error) {
+            setSyncStatus('error')
+            reject(error)
+          }
+        })
+      })
+    },
+    onSuccess: (updatedNote) => {
+      queryClient.setQueryData(['note', id], (oldNote: Note) => ({
+        ...oldNote,
+        content: updatedNote.content,
+      }))
+    },
+  })
 
-  const handlePublishToggle = async () => {
-    if (!note) return
-    try {
-      const updatedNote = note.published
-        ? await trpc.unpublishNote.mutate({ id: note.id })
-        : await trpc.publishNote.mutate({ id: note.id })
-      setNote(updatedNote)
-    } catch (error) {
-      console.error('Error toggling publish status:', error)
-      setError('Failed to update publish status. Please try again later.')
-    }
-  }
+  const publishMutation = useMutation({
+    mutationFn: (isPublished: boolean) => {
+      if (!id) throw new Error('Note ID is required')
+      return isPublished
+        ? trpc.unpublishNote.mutate({ id })
+        : trpc.publishNote.mutate({ id })
+    },
+    onSuccess: (updatedNote) => {
+      queryClient.setQueryData(['note', id], updatedNote)
+    },
+  })
 
-  const handleContentChange = (newContent: string) => {
-    if (!note) return
-    setNote({ ...note, content: newContent })
-    debouncer.debounce('updateContent', async () => {
-      try {
-        await trpc.updateNote.mutate({ id: note.id, content: newContent })
-      } catch (error) {
-        console.error('Error updating note:', error)
-        setError('Failed to update note. Please try again later.')
-      }
-    })
-  }
+  const addTagMutation = useMutation({
+    mutationFn: (tag: string) => {
+      if (!id) throw new Error('Note ID is required')
+      if (!tag.trim()) throw new Error('Tag cannot be empty')
+      return trpc.addTag.mutate({ id, tag: tag.trim() })
+    },
+    onSuccess: (updatedNote) => {
+      queryClient.setQueryData(['note', id], updatedNote)
+    },
+  })
 
-  const handleTitleChange = (newTitle: string) => {
-    if (!note) return
-    setNote({ ...note, title: newTitle })
-    debouncer.debounce('updateTitle', async () => {
-      try {
-        await trpc.updateNote.mutate({ id: note.id, title: newTitle })
-      } catch (error) {
-        console.error('Error updating note title:', error)
-        setError('Failed to update note title. Please try again later.')
-      }
-    })
-  }
+  const removeTagMutation = useMutation({
+    mutationFn: (tag: string) => {
+      if (!id) throw new Error('Note ID is required')
+      return trpc.removeTag.mutate({ id, tag })
+    },
+    onSuccess: (updatedNote) => {
+      queryClient.setQueryData(['note', id], updatedNote)
+    },
+  })
 
-  const handleAddTag = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!note || !newTag.trim()) return
-    try {
-      const updatedNote = await trpc.addTag.mutate({ id: note.id, tag: newTag.trim() })
-      setNote(updatedNote)
-      setNewTag('')
-    } catch (error) {
-      console.error('Error adding tag:', error)
-      setError('Failed to add tag. Please try again later.')
-    }
-  }
-
-  const handleRemoveTag = async (tag: string) => {
-    if (!note) return
-    try {
-      const updatedNote = await trpc.removeTag.mutate({ id: note.id, tag })
-      setNote(updatedNote)
-    } catch (error) {
-      console.error('Error removing tag:', error)
-      setError('Failed to remove tag. Please try again later.')
-    }
-  }
-
-  if (!note) return <p>Loading...</p>
-  if (error) return <div className="error-message">{error}</div>
-
-  return (
-    <div className="container">
-      <header className="flex items-center gap-4 mb-4">
-        <button onClick={() => navigate('/notes')} className="btn btn-nav">⬅️</button>
-        <h1 className="flex-1">Edit Note</h1>
-      </header>
-      <div className="flex-1 overflow-y-auto min-h-0 mb-4">
-        <div className="items-center gap-4 mb-4 flex-shrink-0">
-          <div>
-            <label htmlFor="title">Title</label>
-            <input
-              id="title"
-              type="text"
-              value={note.title}
-              onChange={(e) => handleTitleChange(e.target.value)}
-              className="p-2 border border-gray-300 rounded-md"
-            />
-          </div>
-          <div className="flex gap-4 text-sm text-gray-600">
-            <span>Created: {new Date(note.createdAt).toLocaleString()}</span>
-            <span>Updated: {new Date(note.updatedAt).toLocaleString()}</span>
-          </div>
-          <div className="space-y-2">
-            <form onSubmit={handleAddTag} className="flex gap-2">
-              <input
-                type="text"
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                placeholder="Add tag..."
-                className="px-2 py-1 border border-gray-300 rounded"
-              />
-              <button type="submit" className="btn btn-primary">Add Tag</button>
-            </form>
-            <div className="flex flex-wrap gap-2">
-              {note.tags && note.tags.map(tag => (
-                <span key={tag} className="bg-gray-200 px-2 py-1 rounded-full text-sm flex items-center gap-1">
-                  #{tag}
-                  <button
-                    onClick={() => handleRemoveTag(tag)}
-                    className="text-gray-600 hover:text-red-500 px-1 text-lg"
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-          </div>
-          <button onClick={handlePublishToggle} className="btn btn-primary">
-            {note.published ? 'Unpublish' : 'Publish'}
-          </button>
-        </div>
-        <div className="flex-1">
-          <Editor text={note.content} onTextChange={handleContentChange} />
-        </div>
-        <p>Status: {syncStatus}</p>
+  const content = note ? (
+    <div className="space-y-6">
+      <NoteDetails
+        note={note}
+        syncStatus={syncStatus}
+        onTitleChange={(title) => updateNoteTitleMutation.mutate(title)}
+        onPublishToggle={(isPublished) => publishMutation.mutate(isPublished)}
+        onAddTag={(tag) => addTagMutation.mutate(tag)}
+        onRemoveTag={(tag) => removeTagMutation.mutate(tag)}
+      />
+      <div className="bg-white shadow p-6">
+        <MemoizedEditor
+          initialText={note.content}
+          onTextChange={(text) => updateNoteContentMutation.mutate(text)}
+        />
       </div>
     </div>
+  ) : null
+
+  if (fetchError) return <AppPage title="Error" content={<div className="error-message">{fetchError.message}</div>} />
+  if (!note) return <AppPage title="Loading..." content={<div className="loading-message">Loading...</div>} />
+
+  return (
+    <AppPage
+      title={note.title}
+      content={content}
+      showBack
+      backTo="/notes"
+    />
   )
 }
 
 function NoteView() {
   const { id } = useParams<{ id: string }>()
-  const [note, setNote] = useState<Note | null>(null)
-  const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
 
-  useEffect(() => {
-    const fetchNote = async () => {
-      try {
-        const fetchedNote = await trpc.getNote.query({ id: id! })
-        setNote(fetchedNote)
-      } catch (error) {
-        console.error('Error fetching note:', error)
-        setError('Failed to fetch note. Please try again later.')
-      }
-    }
-    fetchNote()
-  }, [id])
+  const { data: note, error, isLoading } = useQuery({
+    queryKey: ['note', id],
+    queryFn: () => trpc.getNote.query({ id: id! }),
+    enabled: !!id,
+  })
 
-  if (!note) return <p>Loading...</p>
-  if (error) return <div className="error-message">{error}</div>
-
-  return (
-    <div className="container">
-      <div className="flex items-center gap-4 mb-4">
-        <button onClick={() => navigate('/notes')} className="btn btn-nav">⬅️</button>
-        <h1>{note.title}</h1>
-        <div className="flex gap-4 text-sm text-gray-600">
-          <span>Created: {new Date(note.createdAt).toLocaleString()}</span>
-          <span>Updated: {new Date(note.updatedAt).toLocaleString()}</span>
-          <span>{note.published ? '📢 Published' : '📝 Draft'}</span>
+  const content = note ? (
+    <div className="space-y-6">
+      <NoteDetails note={note} />
+      <div className="bg-white shadow p-6">
+        <div className="prose max-w-none">
+          <ReactMarkdown>{note.content}</ReactMarkdown>
         </div>
-        {note.tags && note.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {note.tags.map(tag => (
-              <span key={tag} className="bg-gray-200 px-2 py-1 rounded-full text-sm">#{tag}</span>
-            ))}
-          </div>
-        )}
-        <button onClick={() => navigate(`/notes/edit/${note.id}`)} className="btn btn-info">Edit</button>
-      </div>
-      <div className="flex-1 overflow-y-auto min-h-0 p-4">
-        <ReactMarkdown>{note.content}</ReactMarkdown>
       </div>
     </div>
+  ) : null
+
+  if (error) return <AppPage title="Error" content={<div className="error-message">{error.message}</div>} />
+  if (isLoading || !note) return <AppPage title="Loading..." content={<div className="loading-message">Loading...</div>} />
+
+  return (
+    <AppPage
+      title={note.title}
+      content={content}
+      showBack
+      backTo="/notes"
+      actions={
+        <button
+          onClick={() => navigate(`/notes/edit/${note.id}`)}
+          className="btn btn-info flex items-center gap-2"
+        >
+          <IoMdCreate className="w-5 h-5" />
+          Edit
+        </button>
+      }
+    />
   )
 }
 

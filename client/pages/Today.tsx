@@ -3,7 +3,7 @@ import { trpc } from '../trpc'
 import { Editor } from '../editor/editor'
 import { Debouncer, DebouncerStatus } from '../utils'
 import { Plan } from 'tt-services'
-import styles from './Today.module.css'
+import { AppPage } from '../layout/AppPage'
 
 const debouncer = new Debouncer(500)
 
@@ -64,25 +64,32 @@ export function Today() {
     }
   }
 
-  if (isLoading) return <div className="loading-message">Loading...</div>
-  if (error) return <div className="error-message">{error}</div>
-
-  return (
-    <div className="container">
-      <h1>Today's Plan</h1>
-      {plan ? (
-        <>
+  const content = (
+    <>
+      {isLoading ? (
+        <div className="text-gray-600 text-center py-4">Loading...</div>
+      ) : error ? (
+        <div className="text-red-600 bg-red-50 border border-red-600 rounded p-2 mb-4">{error}</div>
+      ) : plan ? (
+        <div className="space-y-4">
           <Editor text={plan.text} onTextChange={handlePlanChange} />
-          <p className={styles.syncStatus}>Status: {syncStatus}</p>
-        </>
+          <p className="text-gray-600 italic mt-4">Status: {syncStatus}</p>
+        </div>
       ) : (
         <button
           onClick={handleCreatePlan}
-          className="btn btn-primary btn-lg"
+          className="px-6 py-3 bg-green-500 text-white rounded hover:bg-green-600 transition-colors duration-200 text-lg"
         >
           Create Today's Plan
         </button>
       )}
-    </div>
+    </>
+  )
+
+  return (
+    <AppPage
+      title="Today's Plan"
+      content={content}
+    />
   )
 }

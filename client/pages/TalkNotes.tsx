@@ -4,8 +4,9 @@ import { trpc } from '../trpc'
 import { Editor } from '../editor/editor'
 import { Debouncer, DebouncerStatus } from '../utils'
 import ReactMarkdown from 'react-markdown'
-import styles from './TalkNotes.module.css'
 import { TalkNote } from 'tt-services'
+import { AppPage } from '../layout/AppPage'
+import { ListCard } from '../components/ListCard'
 
 const debouncer = new Debouncer(500)
 
@@ -74,32 +75,46 @@ export function TalkNotesList() {
     }
   }
 
-  return (
-    <div className="container">
-      <h1>Talk Notes</h1>
-      {error && <div className="error-message">{error}</div>}
-      {isLoading ? (
-        <p>Loading...</p>
-      ) : (
-        <ul className={styles.talkNotesGrid}>
-          {talkNotes.map(note => (
-            <li key={note.id} className={styles.talkNoteItem}>
-              <h3>{note.title}</h3>
-              <p>{new Date(note.date).toLocaleDateString()} - {note.speaker}</p>
-              <div className={styles.talkNoteActions}>
-                <button onClick={() => navigate(`/talk-notes/view/${note.id}`)} className="btn btn-primary">View</button>
-                <button onClick={() => navigate(`/talk-notes/edit/${note.id}`)} className="btn btn-info">Edit</button>
-                <button onClick={() => handleDeleteNote(note.id)} className="btn btn-danger">Delete</button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-      <div className={styles.actionButtons}>
-        <button onClick={handleCreateNote} className="btn btn-primary">New Talk</button>
+  const content = (
+    <>
+      <div className="page-header">
+        <h2 className="page-title">Talk Notes</h2>
+        <button onClick={handleCreateNote} className="btn btn-primary">
+          New Talk Note
+        </button>
       </div>
-    </div>
+
+      {error && <div className="error-message">{error}</div>}
+
+      {isLoading ? (
+        <div className="loading-message">Loading...</div>
+      ) : (
+        <div className="cards-grid">
+          {talkNotes.map(note => (
+            <ListCard
+              key={note.id}
+              title={note.title}
+              meta={
+                <div className="flex items-center gap-2">
+                  <span>{new Date(note.date).toLocaleDateString()}</span>
+                  <span>👤 {note.speaker}</span>
+                </div>
+              }
+              actions={
+                <>
+                  <button onClick={() => navigate(`/talk-notes/view/${note.id}`)} className="btn btn-primary btn-sm">View</button>
+                  <button onClick={() => navigate(`/talk-notes/edit/${note.id}`)} className="btn btn-info btn-sm">Edit</button>
+                  <button onClick={() => handleDeleteNote(note.id)} className="btn btn-danger btn-sm">Delete</button>
+                </>
+              }
+            />
+          ))}
+        </div>
+      )}
+    </>
   )
+
+  return <AppPage title="Talk Notes" content={content} />
 }
 
 export function TalkNoteView() {
@@ -121,21 +136,28 @@ export function TalkNoteView() {
     fetchNote()
   }, [id])
 
-  if (error) return <div className="error-message">{error}</div>
-  if (!note) return <p>Loading...</p>
-
-  return (
-    <div className="container">
-      <header className={styles.header}>
+  const content = (
+    <div className="space-y-4">
+      <div className="flex items-center gap-4">
         <button onClick={() => navigate('/talk-notes')} className="btn btn-nav">⬅️</button>
-        <h1>{note.title}</h1>
-      </header>
-      <div className={styles.talkNoteContent}>
-        <p className={styles.talkNoteMeta}>Speaker: {note.speaker} | Date: {new Date(note.date).toLocaleDateString()}</p>
-        <ReactMarkdown>{note.content}</ReactMarkdown>
+        <div className="flex-1">
+          <h2 className="text-2xl font-bold">{note?.title}</h2>
+          <p className="text-gray-600">Speaker: {note?.speaker} | Date: {note?.date && new Date(note.date).toLocaleDateString()}</p>
+        </div>
+        <button onClick={() => navigate(`/talk-notes/edit/${id}`)} className="btn btn-info">
+          Edit
+        </button>
+      </div>
+      <div className="prose max-w-none">
+        <ReactMarkdown>{note?.content || ''}</ReactMarkdown>
       </div>
     </div>
   )
+
+  if (error) return <AppPage title="Error" content={<div className="error-message">{error}</div>} />
+  if (!note) return <AppPage title="Loading..." content={<div className="loading-message">Loading...</div>} />
+
+  return <AppPage title={note.title} content={content} />
 }
 
 export function TalkNoteEdit() {
@@ -168,7 +190,6 @@ export function TalkNoteEdit() {
 
   const handleNoteChange = (newContent: string) => {
     if (!note) return
-
     setNote(prev => prev ? { ...prev, content: newContent } : null)
     debouncer.debounce('updateContent', async () => {
       try {
@@ -182,7 +203,6 @@ export function TalkNoteEdit() {
 
   const handleSpeakerChange = (newSpeaker: string) => {
     if (!note) return
-
     setNote(prev => prev ? { ...prev, speaker: newSpeaker } : null)
     debouncer.debounce('updateSpeaker', async () => {
       try {
@@ -196,7 +216,6 @@ export function TalkNoteEdit() {
 
   const handleTitleChange = (newTitle: string) => {
     if (!note) return
-
     setNote(prev => prev ? { ...prev, title: newTitle } : null)
     debouncer.debounce('updateTitle', async () => {
       try {
@@ -222,38 +241,37 @@ export function TalkNoteEdit() {
     }
   }
 
-  if (error) return <div className="error-message">{error}</div>
-  if (!note) return <p>Loading...</p>
-
-  return (
-    <div className="container">
-      <header className={styles.header}>
+  const content = (
+    <div className="space-y-4">
+      <div className="flex items-center gap-4">
         <button onClick={() => navigate('/talk-notes')} className="btn btn-nav">⬅️</button>
-        <h1>Edit Talk Note</h1>
-      </header>
-      <div className={styles.talkNoteForm}>
         <input
           type="text"
-          value={note.title}
+          value={note?.title}
           onChange={(e) => handleTitleChange(e.target.value)}
+          className="title-input"
           placeholder="Talk title"
-          className={styles.talkNoteInput}
         />
-        <input
-          type="text"
-          value={note.speaker}
-          onChange={(e) => handleSpeakerChange(e.target.value)}
-          placeholder="Speaker name"
-          className={styles.talkNoteInput}
-        />
-        <Editor text={note.content} onTextChange={handleNoteChange} />
       </div>
-      <div className={styles.actionButtons}>
-        <p className={styles.syncStatus}>Status: {prettySyncStatus(syncStatus)}</p>
+      <input
+        type="text"
+        value={note?.speaker}
+        onChange={(e) => handleSpeakerChange(e.target.value)}
+        placeholder="Speaker name"
+        className="w-full px-4 py-2 border border-gray-300 rounded focus:border-yellow-400"
+      />
+      <Editor text={note?.content || ''} onTextChange={handleNoteChange} />
+      <div className="flex justify-between items-center">
+        <p className="sync-status">Status: {prettySyncStatus(syncStatus)}</p>
         <button onClick={handleDelete} className="btn btn-danger">Delete Talk Note</button>
       </div>
     </div>
   )
+
+  if (error) return <AppPage title="Error" content={<div className="error-message">{error}</div>} />
+  if (!note) return <AppPage title="Loading..." content={<div className="loading-message">Loading...</div>} />
+
+  return <AppPage title="Edit Talk Note" content={content} />
 }
 
 export function TalkNotesRouter() {
