@@ -1,33 +1,109 @@
-import { useState, ReactNode } from 'react'
+import { useState, ReactNode, useEffect, useRef } from 'react'
 import { IoMdArrowDropdown, IoMdArrowDropright, IoMdCalendar, IoMdTime, IoMdMegaphone, IoMdLock } from 'react-icons/io'
 import { Note } from 'tt-services'
 import { TagView } from './TagView'
+import { trpc } from '../trpc'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Debouncer, DebouncerStatus } from '../utils'
+import { useNote } from '../queries'
 
-interface NoteDetailsProps {
-  note: Note
-  syncStatus?: string
-  onTitleChange?: (title: string) => void
-  onPublishToggle?: (isPublished: boolean) => void
-  onAddTag?: (tag: string) => void
-  onRemoveTag?: (tag: string) => void
+const debouncer = new Debouncer(500)
+
+interface DetailRowProps {
+  label: string
+  children: ReactNode
 }
 
-export function NoteDetails({
-  note,
-  syncStatus,
-  onTitleChange,
-  onPublishToggle,
-  onAddTag,
-  onRemoveTag,
-}: NoteDetailsProps) {
-  const [isExpanded, setIsExpanded] = useState(true)
+const DetailRow = ({ label, children }: DetailRowProps) => (
+  <div className="flex items-center gap-4">
+    <span className="text-sm font-medium text-gray-500 w-24">{label}</span>
+    {children}
+  </div>
+)
 
-  const DetailRow = ({ label, children }: { label: string; children: ReactNode }) => (
-    <div className="flex items-center gap-4">
-      <span className="text-sm font-medium text-gray-500 w-24">{label}</span>
-      {children}
-    </div>
-  )
+interface NoteDetailsProps {
+  noteId: string
+  isEditable?: boolean
+}
+
+export function NoteDetails({ noteId, isEditable = false }: NoteDetailsProps) {
+  const [isExpanded, setIsExpanded] = useState(true)
+  const [syncStatus, setSyncStatus] = useState<DebouncerStatus>('synced')
+  const queryClient = useQueryClient()
+  const titleInitialized = useRef(false)
+
+  const { data: note, error, isLoading } = useNote(noteId)
+  const [localTitle, setLocalTitle] = useState('')
+
+  useEffect(() => {
+    if (note?.title && !titleInitialized.current) {
+      setLocalTitle(note.title)
+      titleInitialized.current = true
+    }
+  }, [note?.title])
+
+  const updateNoteTitleMutation = useMutation({
+    mutationFn: (title: string) => {
+      setSyncStatus('syncing')
+      return new Promise<Note>((resolve, reject) => {
+        debouncer.debounce('updateTitle', async () => {
+          try {
+            const result = await trpc.updateNote.mutate({ id: noteId, title })
+            setSyncStatus('synced')
+            resolve(result)
+          } catch (error) {
+            setSyncStatus('error')
+            reject(error)
+          }
+        })
+      })
+    },
+    onSuccess: (updatedNote) => {
+      queryClient.setQueryData(['note', noteId], (oldNote: Note) => ({
+        ...oldNote,
+        title: updatedNote.title,
+      }))
+    },
+  })
+
+  const handleTitleChange = (newTitle: string) => {
+    setLocalTitle(newTitle)
+    setSyncStatus('syncing')
+    updateNoteTitleMutation.mutate(newTitle)
+  }
+
+  const publishMutation = useMutation({
+    mutationFn: (isPublished: boolean) => {
+      return isPublished
+        ? trpc.unpublishNote.mutate({ id: noteId })
+        : trpc.publishNote.mutate({ id: noteId })
+    },
+    onSuccess: (updatedNote) => {
+      queryClient.setQueryData(['note', noteId], updatedNote)
+    },
+  })
+
+  const addTagMutation = useMutation({
+    mutationFn: (tag: string) => {
+      if (!tag.trim()) throw new Error('Tag cannot be empty')
+      return trpc.addTag.mutate({ id: noteId, tag: tag.trim() })
+    },
+    onSuccess: (updatedNote) => {
+      queryClient.setQueryData(['note', noteId], updatedNote)
+    },
+  })
+
+  const removeTagMutation = useMutation({
+    mutationFn: (tag: string) => {
+      return trpc.removeTag.mutate({ id: noteId, tag })
+    },
+    onSuccess: (updatedNote) => {
+      queryClient.setQueryData(['note', noteId], updatedNote)
+    },
+  })
+
+  if (error) return <div className="error-message">{error.message}</div>
+  if (isLoading || !note) return <div className="loading-message">Loading...</div>
 
   return (
     <div className="bg-white shadow">
@@ -41,15 +117,15 @@ export function NoteDetails({
       {isExpanded && (
         <div className="p-6 space-y-4 border-t">
           <DetailRow label="Title">
-            {onTitleChange ? (
+            {isEditable ? (
               <input
                 type="text"
-                value={note.title}
-                onChange={(e) => onTitleChange(e.target.value)}
+                value={localTitle}
+                onChange={(e) => handleTitleChange(e.target.value)}
                 className="flex-1 text-2xl font-bold border-0 bg-transparent p-2 focus:outline-none focus:bg-gray-100 rounded transition-colors duration-200"
               />
             ) : (
-              <span className="text-2xl font-bold">{note.title}</span>
+              <span className="text-2xl font-bold">{localTitle}</span>
             )}
           </DetailRow>
           {syncStatus && (
@@ -73,15 +149,15 @@ export function NoteDetails({
             <div className="flex-1">
               <TagView
                 tags={note.tags || []}
-                onNewTag={onAddTag}
-                onRemoveTag={onRemoveTag}
+                onNewTag={isEditable ? (tag) => addTagMutation.mutate(tag) : undefined}
+                onRemoveTag={isEditable ? (tag) => removeTagMutation.mutate(tag) : undefined}
               />
             </div>
           </DetailRow>
-          {onPublishToggle && (
+          {isEditable && (
             <DetailRow label="Visibility">
               <button
-                onClick={() => onPublishToggle(note.published)}
+                onClick={() => publishMutation.mutate(note.published)}
                 className="btn btn-primary btn-sm flex items-center gap-2"
               >
                 {note.published ? <IoMdLock className="w-4 h-4" /> : <IoMdMegaphone className="w-4 h-4" />}

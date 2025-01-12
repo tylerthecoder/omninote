@@ -526,6 +526,49 @@ export const appRouter = t.router({
     .query(async ({ input, ctx }) => {
       return ctx.tylersThings.notes.getNotesByTag(input.tag);
     }),
+
+  // Google Notes routes
+  getAllGoogleNotes: t.procedure
+    .query(async ({ ctx }) => {
+      return ctx.tylersThings.googleNotes.getAllGoogleNotes();
+    }),
+
+  getGoogleNoteById: t.procedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input, ctx }) => {
+      return ctx.tylersThings.googleNotes.getGoogleNoteById(input.id);
+    }),
+
+  createGoogleNote: t.procedure
+    .input(z.object({ googleDocId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      return ctx.tylersThings.googleNotes.createGoogleNote(input.googleDocId);
+    }),
+
+  updateGoogleNote: t.procedure
+    .input(z.object({
+      id: z.string(),
+      title: z.string().optional(),
+      content: z.string().optional(),
+      date: z.string().optional(),
+      googleDocId: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const { id, ...update } = input;
+      return ctx.tylersThings.googleNotes.updateGoogleNote(id, update);
+    }),
+
+  deleteGoogleNote: t.procedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      return ctx.tylersThings.googleNotes.deleteGoogleNote(input.id);
+    }),
+
+  getGoogleDocContent: t.procedure
+    .input(z.object({ googleDocId: z.string() }))
+    .query(async ({ input, ctx }) => {
+      return ctx.tylersThings.googleNotes.getGoogleDocContent(input.googleDocId);
+    }),
 });
 
 export type AppRouter = typeof appRouter;

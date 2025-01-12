@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { IoMdCalendar, IoMdCheckmark, IoMdCart, IoMdChatbubbles, IoMdBook, IoMdDocument,
-  IoMdBrush, IoMdBulb, IoMdFilm, IoMdHammer, IoMdLaptop, IoMdHome, IoMdMenu, IoMdArrowBack } from 'react-icons/io'
+  IoMdBrush, IoMdBulb, IoMdFilm, IoMdHammer, IoMdLaptop, IoMdHome, IoMdMenu, IoMdArrowBack, IoMdCloud } from 'react-icons/io'
 
 interface AppPageProps {
   title: string
+  showSidebar?: boolean
   content: React.ReactNode
   actions?: React.ReactNode
   showBack?: boolean
   backTo?: string
 }
 
-export function AppPage({ title, content, actions, showBack, backTo }: AppPageProps) {
+export function AppPage({ title, content, actions, showBack, backTo, showSidebar = true }: AppPageProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const mobileNavRef = useRef<HTMLDivElement>(null)
   const location = useLocation()
@@ -63,6 +64,11 @@ export function AppPage({ title, content, actions, showBack, backTo }: AppPagePr
       to: '/notes',
       label: 'Notes',
       icon: <IoMdDocument className="w-5 h-5" />,
+    },
+    {
+      to: '/google-notes',
+      label: 'Google Notes',
+      icon: <IoMdCloud className="w-5 h-5" />,
     },
     {
       to: '/creations',
@@ -134,17 +140,17 @@ export function AppPage({ title, content, actions, showBack, backTo }: AppPagePr
       )}
 
       {/* Desktop navigation */}
-      <nav className="hidden lg:block fixed top-0 left-0 h-full w-64 bg-yellow-300 shadow-lg">
+      {showSidebar && <nav className="hidden lg:block fixed top-0 left-0 h-full w-64 bg-yellow-300 shadow-lg">
         <div className="p-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-8">TylerNote</h1>
           <ul className="space-y-1">
             <NavLinks />
           </ul>
         </div>
-      </nav>
+      </nav>}
 
       {/* Main content */}
-      <main className="lg:pl-64 min-h-screen">
+      <main className={`transition-all duration-300 ${showSidebar ? 'lg:pl-64' : 'lg:pl-20'} min-h-screen`}>
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">

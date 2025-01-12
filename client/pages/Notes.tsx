@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate, useParams, Route, Routes } from 'react-router-dom'
+import { useEffect, useState, useRef } from 'react'
+import { useNavigate, useParams, Route, Routes, Navigate } from 'react-router-dom'
 import { trpc } from '../trpc'
 import { MemoizedEditor } from '../components/editor/editor'
 import { Debouncer, DebouncerStatus } from '../utils'
@@ -9,19 +9,114 @@ import { AppPage } from '../layout/AppPage'
 import { TagView } from '../components/TagView'
 import { ItemList } from '../components/ItemList'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { IoMdAdd, IoMdEye, IoMdCreate, IoMdTrash, IoMdMegaphone, IoMdLock, IoMdTime, IoMdCalendar, IoMdDocument } from 'react-icons/io'
+import { IoMdAdd, IoMdEye, IoMdCreate, IoMdTrash, IoMdMegaphone, IoMdLock, IoMdTime, IoMdCalendar, IoMdDocument, IoMdPricetag, IoMdClose } from 'react-icons/io'
 import { NoteDetails } from '../components/NoteDetails'
+import { useNote } from '../queries'
 
 const debouncer = new Debouncer(500)
+
+type TagState = 'contains' | 'not-contains' | 'none'
 
 function NotesList() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const [tagStates, setTagStates] = useState<Record<string, TagState>>({})
+  const filterRef = useRef<HTMLDivElement>(null)
+  const [focusedIndex, setFocusedIndex] = useState<number>(-1)
 
   const { data: notes, isLoading, error } = useQuery({
     queryKey: ['notes'],
     queryFn: () => trpc.getAllNotes.query(),
   })
+
+  // Get unique tags from all notes
+  const allTags = Array.from(new Set(notes?.flatMap(note => note.tags || []) || []))
+
+  // Toggle tag state in cycle: none -> contains -> not-contains -> none
+  const toggleTagState = (tag: string) => {
+    setTagStates(prev => {
+      const currentState = prev[tag] || 'none'
+      const nextState: TagState =
+        currentState === 'none' ? 'contains' :
+        currentState === 'contains' ? 'not-contains' :
+        'none'
+      return { ...prev, [tag]: nextState }
+    })
+  }
+
+  // Filter notes based on tag states
+  const filteredNotes = notes?.filter(note => {
+    return Object.entries(tagStates).every(([tag, state]) => {
+      if (state === 'none') return true
+      if (state === 'contains') return note.tags?.includes(tag)
+      if (state === 'not-contains') return !note.tags?.includes(tag)
+      return true
+    })
+  })
+
+  // Handle keyboard navigation
+  const handleKeyDown = (e: KeyboardEvent | React.KeyboardEvent, index?: number) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault()
+      const nextIndex = index !== undefined ?
+        Math.min(index + 1, allTags.length - 1) :
+        focusedIndex < 0 ? 0 : Math.min(focusedIndex + 1, allTags.length - 1)
+      setFocusedIndex(nextIndex)
+      const buttons = filterRef.current?.querySelectorAll('button')
+      buttons?.[nextIndex]?.focus()
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault()
+      const prevIndex = index !== undefined ?
+        Math.max(index - 1, 0) :
+        focusedIndex < 0 ? allTags.length - 1 : Math.max(focusedIndex - 1, 0)
+      setFocusedIndex(prevIndex)
+      const buttons = filterRef.current?.querySelectorAll('button')
+      buttons?.[prevIndex]?.focus()
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      if (index !== undefined) {
+        toggleTagState(allTags[index])
+      } else if (focusedIndex >= 0) {
+        toggleTagState(allTags[focusedIndex])
+      }
+    }
+  }
+
+  // Keyboard shortcut handler
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'f' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        const firstChip = filterRef.current?.querySelector('button')
+        firstChip?.focus()
+        setFocusedIndex(0)
+      }
+    }
+    window.addEventListener('keydown', handleGlobalKeyDown)
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown)
+  }, [])
+
+  const getChipStyle = (state: TagState) => {
+    switch (state) {
+      case 'contains':
+        return 'bg-yellow-400 text-yellow-900 hover:bg-yellow-500'
+      case 'not-contains':
+        return 'bg-red-400 text-red-900 hover:bg-red-500'
+      default:
+        return 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+    }
+  }
+
+  const getChipIcon = (state: TagState) => {
+    switch (state) {
+      case 'contains':
+        return <IoMdAdd className="w-3 h-3" />
+      case 'not-contains':
+        return <IoMdClose className="w-3 h-3" />
+      default:
+        return <IoMdPricetag className="w-3 h-3" />
+    }
+  }
 
   const deleteNoteMutation = useMutation({
     mutationFn: (id: string) => {
@@ -43,11 +138,82 @@ function NotesList() {
         </div>
       )}
 
+      <div className="mb-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-gray-600">Filter by tags (use arrow keys or click to navigate):</div>
+          <div className="text-sm text-gray-500 flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              <kbd className="px-2 py-1 bg-gray-100 rounded-md border border-gray-300">⌘</kbd>
+              <kbd className="px-2 py-1 bg-gray-100 rounded-md border border-gray-300">F</kbd>
+              <span className="ml-1">to focus</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <kbd className="px-2 py-1 bg-gray-100 rounded-md border border-gray-300">←</kbd>
+              <kbd className="px-2 py-1 bg-gray-100 rounded-md border border-gray-300">→</kbd>
+              <span className="ml-1">to navigate</span>
+            </div>
+          </div>
+        </div>
+
+        <div
+          className="flex flex-wrap gap-2"
+          ref={filterRef}
+          role="group"
+          aria-label="Tag filters"
+          onKeyDown={handleKeyDown}
+        >
+          {allTags.map((tag, index) => {
+            const state = tagStates[tag] || 'none'
+            return (
+              <button
+                key={tag}
+                onClick={() => toggleTagState(tag)}
+                onKeyDown={(e) => handleKeyDown(e, index)}
+                onFocus={() => setFocusedIndex(index)}
+                className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-400 ${getChipStyle(state)}`}
+                role="checkbox"
+                aria-checked={state !== 'none'}
+                aria-label={`Filter by tag ${tag}: ${state}`}
+                tabIndex={0}
+              >
+                {getChipIcon(state)}
+                {tag}
+              </button>
+            )
+          })}
+          {Object.values(tagStates).some(state => state !== 'none') && (
+            <button
+              onClick={() => setTagStates({})}
+              onFocus={() => setFocusedIndex(-1)}
+              className="text-sm text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-400 rounded-full px-3 py-1"
+              tabIndex={0}
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+
+        <div className="flex gap-2 text-xs text-gray-500">
+          <span className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded-full bg-gray-100"></div>
+            No filter
+          </span>
+          <span className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
+            Contains tag
+          </span>
+          <span className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded-full bg-red-400"></div>
+            Doesn't contain tag
+          </span>
+        </div>
+      </div>
+
       {isLoading ? (
         <div className="loading-message">Loading...</div>
       ) : (
         <ItemList
-          items={notes?.map(note => ({
+          items={filteredNotes?.map(note => ({
             id: note.id,
             title: note.title,
             meta: (
@@ -114,34 +280,19 @@ function NotesList() {
 
 function NoteEdit() {
   const { id } = useParams<{ id: string }>()
+  if (!id) return <AppPage title="Error" content={<div className="error-message">Note ID is required</div>} />
+
   const queryClient = useQueryClient()
   const [syncStatus, setSyncStatus] = useState<DebouncerStatus>('synced')
-
-  const { data: note, error: fetchError } = useQuery({
-    queryKey: ['note', id],
-    queryFn: () => trpc.getNote.query({ id: id! }),
-    enabled: !!id,
-  })
-
-  const updateNoteTitleMutation = useMutation({
-    mutationFn: (title: string) => {
-      if (!id) throw new Error('Note ID is required')
-      return trpc.updateNote.mutate({ id, title })
-    },
-    onSuccess: (updatedNote) => {
-      queryClient.setQueryData(['note', id], (oldNote: Note) => ({
-        ...oldNote,
-        title: updatedNote.title,
-      }))
-    },
-  })
+  const { data: note, error: fetchError } = useNote(id)
 
   const updateNoteContentMutation = useMutation({
     mutationFn: (content: string) => {
-      if (!id) throw new Error('Note ID is required')
       setSyncStatus('syncing')
+      console.log('Updating note content', content)
       return new Promise<Note>((resolve, reject) => {
         debouncer.debounce('updateContent', async () => {
+          console.log('Updating note content', content)
           try {
             const result = await trpc.updateNote.mutate({ id, content })
             setSyncStatus('synced')
@@ -161,49 +312,9 @@ function NoteEdit() {
     },
   })
 
-  const publishMutation = useMutation({
-    mutationFn: (isPublished: boolean) => {
-      if (!id) throw new Error('Note ID is required')
-      return isPublished
-        ? trpc.unpublishNote.mutate({ id })
-        : trpc.publishNote.mutate({ id })
-    },
-    onSuccess: (updatedNote) => {
-      queryClient.setQueryData(['note', id], updatedNote)
-    },
-  })
-
-  const addTagMutation = useMutation({
-    mutationFn: (tag: string) => {
-      if (!id) throw new Error('Note ID is required')
-      if (!tag.trim()) throw new Error('Tag cannot be empty')
-      return trpc.addTag.mutate({ id, tag: tag.trim() })
-    },
-    onSuccess: (updatedNote) => {
-      queryClient.setQueryData(['note', id], updatedNote)
-    },
-  })
-
-  const removeTagMutation = useMutation({
-    mutationFn: (tag: string) => {
-      if (!id) throw new Error('Note ID is required')
-      return trpc.removeTag.mutate({ id, tag })
-    },
-    onSuccess: (updatedNote) => {
-      queryClient.setQueryData(['note', id], updatedNote)
-    },
-  })
-
   const content = note ? (
     <div className="space-y-6">
-      <NoteDetails
-        note={note}
-        syncStatus={syncStatus}
-        onTitleChange={(title) => updateNoteTitleMutation.mutate(title)}
-        onPublishToggle={(isPublished) => publishMutation.mutate(isPublished)}
-        onAddTag={(tag) => addTagMutation.mutate(tag)}
-        onRemoveTag={(tag) => removeTagMutation.mutate(tag)}
-      />
+      <NoteDetails noteId={id} isEditable={true} />
       <div className="bg-white shadow p-6">
         <div className="space-y-4">
           <MemoizedEditor
@@ -218,12 +329,15 @@ function NoteEdit() {
   if (fetchError) return <AppPage title="Error" content={<div className="error-message">{fetchError.message}</div>} />
   if (!note) return <AppPage title="Loading..." content={<div className="loading-message">Loading...</div>} />
 
+  console.log('NoteEdit', note)
+
   return (
     <AppPage
       title={note.title}
       content={content}
       showBack
       backTo="/notes"
+      showSidebar={false}
     />
   )
 }
@@ -232,15 +346,13 @@ function NoteView() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
 
-  const { data: note, error, isLoading } = useQuery({
-    queryKey: ['note', id],
-    queryFn: () => trpc.getNote.query({ id: id! }),
-    enabled: !!id,
-  })
+  if (!id) return <AppPage title="Error" content={<div className="error-message">Note ID is required</div>} />
+
+  const { data: note, error, isLoading } = useNote(id)
 
   const content = note ? (
     <div className="space-y-6">
-      <NoteDetails note={note} />
+      <NoteDetails noteId={id} />
       <div className="bg-white shadow p-6">
         <div className="prose max-w-none">
           <ReactMarkdown>{note.content}</ReactMarkdown>
@@ -258,6 +370,7 @@ function NoteView() {
       content={content}
       showBack
       backTo="/notes"
+      showSidebar={false}
       actions={
         <button
           onClick={() => navigate(`/notes/edit/${note.id}`)}
@@ -271,12 +384,47 @@ function NoteView() {
   )
 }
 
+function NewNote() {
+
+  const { data: note, error, mutate } = useMutation({
+    mutationFn: () => trpc.createNote.mutate({
+      title: 'New Note',
+      content: '',
+      date: new Date().toISOString(),
+    }),
+  })
+
+  useEffect(() => {
+    mutate()
+  }, [])
+
+  if (error) return <AppPage title="Error" content={<div className="error-message">{error.message}</div>} />
+
+  if (note) {
+    return <Navigate to={`/notes/edit/${note.id}`} />
+  }
+
+  return (
+    <AppPage
+      title="New Note"
+      content={
+        <div> Making new note</div>
+      }
+      showBack
+      backTo="/notes"
+      showSidebar={false}
+    />
+  )
+}
+
 export function NotesRouter() {
+  console.log('NotesRouter')
   return (
     <Routes>
       <Route index element={<NotesList />} />
       <Route path="view/:id" element={<NoteView />} />
       <Route path="edit/:id" element={<NoteEdit />} />
+      <Route path="new" element={<NewNote />} />
     </Routes>
   )
 }

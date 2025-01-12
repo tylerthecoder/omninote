@@ -18,14 +18,24 @@ function TodayTab() {
     queryFn: () => trpc.getToday.query(),
   })
 
+  console.log('plan', plan, error, isLoading)
+
   const updateMutation = useMutation({
     mutationFn: (text: string) => {
       setSyncStatus('syncing')
-      if (!plan?.id) throw new Error('Plan ID is required')
+      console.log('updateMutation', text)
+      console.log('plan', plan)
       return new Promise<void>((resolve, reject) => {
         debouncer.debounce('updateToday', async () => {
+          console.log('debounced', text)
           try {
-            await trpc.updatePlan.mutate({ id: plan?.id, text })
+            if (!plan?.id) {
+              console.log('Creating today\'s plan')
+              await trpc.createToday.mutate({ text })
+            } else {
+              console.log('Updating today\'s plan')
+              await trpc.updatePlan.mutate({ id: plan?.id, text })
+            }
             setSyncStatus('synced')
             resolve()
           } catch (error) {
@@ -45,6 +55,7 @@ function TodayTab() {
       return { previousPlan }
     },
     onError: (err, text, context) => {
+      console.log('onError', err, text, context)
       if (context?.previousPlan) {
         queryClient.setQueryData(['today'], context.previousPlan)
       }

@@ -7,6 +7,7 @@ import { BuyList } from './pages/BuyList.tsx'
 import { TalkNotesRouter } from './pages/TalkNotes.tsx'
 import { ReadingListRouter } from './pages/ReadingList.tsx'
 import { NotesRouter } from './pages/Notes.tsx'
+import { GoogleNotesRouter } from './pages/GoogleNotes.tsx'
 import { Home } from './pages/Home.tsx'
 import { SparksList } from './pages/Sparks.tsx'
 import { MoviesRouter } from './pages/Movies.tsx'
@@ -61,6 +62,7 @@ function App() {
           <Route path="/talk-notes/*" element={<TalkNotesRouter />} />
           <Route path="/reading-list/*" element={<ReadingListRouter />} />
           <Route path="/notes/*" element={<NotesRouter />} />
+          <Route path="/google-notes/*" element={<GoogleNotesRouter />} />
           <Route path="/sparks" element={<SparksList />} />
           <Route path="/movies/*" element={<MoviesRouter />} />
           <Route path="/weekend-projects/*" element={<WeekendProjectsRouter />} />
