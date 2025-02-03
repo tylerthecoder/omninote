@@ -3,7 +3,6 @@ import { useNavigate, useParams, Route, Routes, Navigate } from 'react-router-do
 import { trpc } from '../trpc'
 import { MemoizedEditor } from '../components/editor/editor'
 import { Debouncer, DebouncerStatus } from '../utils'
-import ReactMarkdown from 'react-markdown'
 import { Note } from 'tt-services'
 import { AppPage } from '../layout/AppPage'
 import { TagView } from '../components/TagView'
@@ -12,6 +11,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { IoMdAdd, IoMdEye, IoMdCreate, IoMdTrash, IoMdMegaphone, IoMdLock, IoMdTime, IoMdCalendar, IoMdDocument, IoMdPricetag, IoMdClose } from 'react-icons/io'
 import { NoteDetails } from '../components/NoteDetails'
 import { useNote } from '../queries'
+import MarkdownViewer from '../components/MarkdownViewer'
 
 const debouncer = new Debouncer(500)
 
@@ -38,8 +38,8 @@ function NotesList() {
       const currentState = prev[tag] || 'none'
       const nextState: TagState =
         currentState === 'none' ? 'contains' :
-        currentState === 'contains' ? 'not-contains' :
-        'none'
+          currentState === 'contains' ? 'not-contains' :
+            'none'
       return { ...prev, [tag]: nextState }
     })
   }
@@ -354,9 +354,7 @@ function NoteView() {
     <div className="space-y-6">
       <NoteDetails noteId={id} />
       <div className="bg-white shadow p-6">
-        <div className="prose max-w-none">
-          <ReactMarkdown>{note.content}</ReactMarkdown>
-        </div>
+        <MarkdownViewer markdown={note.content} />
       </div>
     </div>
   ) : null

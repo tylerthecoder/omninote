@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, Route, Routes, Navigate } from 'react-router-dom'
 import { trpc } from '../trpc'
-import ReactMarkdown from 'react-markdown'
 import { GoogleNote } from 'tt-services'
 import { AppPage } from '../layout/AppPage'
 import { TagView } from '../components/TagView'
@@ -9,6 +8,7 @@ import { ItemList } from '../components/ItemList'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { IoMdAdd, IoMdEye, IoMdTrash, IoMdMegaphone, IoMdDocument, IoMdCalendar, IoMdOpen } from 'react-icons/io'
 import { NoteDetails } from '../components/NoteDetails'
+import MarkdownViewer from '../components/MarkdownViewer'
 
 function GoogleNotesList() {
   const navigate = useNavigate()
@@ -145,9 +145,7 @@ function GoogleNoteView() {
         {isContentLoading ? (
           <div className="loading-message">Loading content...</div>
         ) : (
-          <div className="prose max-w-none">
-            <ReactMarkdown>{content || ''}</ReactMarkdown>
-          </div>
+          <MarkdownViewer markdown={content || ''} />
         )}
       </div>
     </div>

@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { IoMdCalendar, IoMdCheckmark, IoMdCart, IoMdChatbubbles, IoMdBook, IoMdDocument,
-  IoMdBrush, IoMdBulb, IoMdFilm, IoMdHammer, IoMdLaptop, IoMdHome, IoMdMenu, IoMdArrowBack, IoMdCloud } from 'react-icons/io'
+import {
+  IoMdCalendar, IoMdCheckmark, IoMdCart, IoMdChatbubbles, IoMdBook, IoMdDocument,
+  IoMdBrush, IoMdBulb, IoMdFilm, IoMdHammer, IoMdLaptop, IoMdHome, IoMdMenu, IoMdArrowBack, IoMdCloud
+} from 'react-icons/io'
 
 interface AppPageProps {
   title: string
@@ -17,17 +19,6 @@ export function AppPage({ title, content, actions, showBack, backTo, showSidebar
   const mobileNavRef = useRef<HTMLDivElement>(null)
   const location = useLocation()
   const navigate = useNavigate()
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (mobileNavRef.current && !mobileNavRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   const navigation = [
     {
@@ -103,11 +94,10 @@ export function AppPage({ title, content, actions, showBack, backTo, showSidebar
         <li key={item.to} className="py-2">
           <Link
             to={item.to}
-            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200 ${
-              location.pathname === item.to || location.pathname.startsWith(item.to + '/')
-                ? 'bg-yellow-400 text-gray-900'
-                : 'text-gray-800 hover:bg-yellow-200'
-            }`}
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200 ${location.pathname === item.to || location.pathname.startsWith(item.to + '/')
+              ? 'bg-yellow-400 text-gray-900'
+              : 'text-gray-800 hover:bg-yellow-200'
+              }`}
             onClick={() => setIsMenuOpen(false)}
           >
             {item.icon}
