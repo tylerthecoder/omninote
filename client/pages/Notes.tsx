@@ -10,7 +10,7 @@ import { ItemList } from '../components/ItemList'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { IoMdAdd, IoMdEye, IoMdCreate, IoMdTrash, IoMdMegaphone, IoMdLock, IoMdTime, IoMdCalendar, IoMdDocument, IoMdPricetag, IoMdClose } from 'react-icons/io'
 import { NoteDetails } from '../components/NoteDetails'
-import { useNote } from '../queries'
+import { useNote, useAllNotes, useUpdateNote, useCreateNote } from '../queries'
 import MarkdownViewer from '../components/MarkdownViewer'
 
 const debouncer = new Debouncer(500)
@@ -24,10 +24,7 @@ function NotesList() {
   const filterRef = useRef<HTMLDivElement>(null)
   const [focusedIndex, setFocusedIndex] = useState<number>(-1)
 
-  const { data: notes, isLoading, error } = useQuery({
-    queryKey: ['notes'],
-    queryFn: () => trpc.getAllNotes.query(),
-  })
+  const { data: notes, isLoading, error } = useAllNotes()
 
   // Get unique tags from all notes
   const allTags = Array.from(new Set(notes?.flatMap(note => note.tags || []) || []))
@@ -282,35 +279,8 @@ function NoteEdit() {
   const { id } = useParams<{ id: string }>()
   if (!id) return <AppPage title="Error" content={<div className="error-message">Note ID is required</div>} />
 
-  const queryClient = useQueryClient()
-  const [syncStatus, setSyncStatus] = useState<DebouncerStatus>('synced')
   const { data: note, error: fetchError } = useNote(id)
-
-  const updateNoteContentMutation = useMutation({
-    mutationFn: (content: string) => {
-      setSyncStatus('syncing')
-      console.log('Updating note content', content)
-      return new Promise<Note>((resolve, reject) => {
-        debouncer.debounce('updateContent', async () => {
-          console.log('Updating note content', content)
-          try {
-            const result = await trpc.updateNote.mutate({ id, content })
-            setSyncStatus('synced')
-            resolve(result)
-          } catch (error) {
-            setSyncStatus('error')
-            reject(error)
-          }
-        })
-      })
-    },
-    onSuccess: (updatedNote) => {
-      queryClient.setQueryData(['note', id], (oldNote: Note) => ({
-        ...oldNote,
-        content: updatedNote.content,
-      }))
-    },
-  })
+  const { mutation: updateMutation, status: syncStatus } = useUpdateNote()
 
   const content = note ? (
     <div className="space-y-6">
@@ -319,7 +289,7 @@ function NoteEdit() {
         <div className="space-y-4">
           <MemoizedEditor
             initialText={note.content}
-            onTextChange={(text) => updateNoteContentMutation.mutate(text)}
+            onTextChange={(text) => updateMutation.mutate({ id, content: text })}
           />
         </div>
       </div>
@@ -383,14 +353,7 @@ function NoteView() {
 }
 
 function NewNote() {
-
-  const { data: note, error, mutate } = useMutation({
-    mutationFn: () => trpc.createNote.mutate({
-      title: 'New Note',
-      content: '',
-      date: new Date().toISOString(),
-    }),
-  })
+  const { data: note, error, mutate } = useCreateNote()
 
   useEffect(() => {
     mutate()

@@ -5,6 +5,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { createContext } from './context.ts';
+import { DatabaseSingleton } from 'tt-services/src/connections/mongo.ts';
 
 dotenv.config();
 
@@ -15,10 +16,30 @@ const startServer = async () => {
 
     app.use(cors());
 
+    console.log("Connecting to db");
+    const startTime = Date.now();
+    const db = await DatabaseSingleton.getInstance();
+
+
+    // Request logger middleware
+    app.use((req, res, next) => {
+        const start = Date.now();
+        console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - Started`);
+
+        // Add listener for when response finishes
+        res.on('finish', () => {
+            const duration = Date.now() - start;
+            console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - Completed in ${duration}ms`);
+        });
+
+        next();
+    });
+
     // Set up the tRPC middleware
     app.use('/trpc', createExpressMiddleware({
         router: appRouter,
         createContext,
+
     }));
 
     // Serve static files from the React app

@@ -8,7 +8,7 @@ export class Debouncer {
 	private status: DebouncerStatus = 'synced';
 	private statusChangeListeners: StatusChangeListener[] = [];
 
-	constructor(private readonly delay: number) {}
+	constructor(private readonly delay: number) { }
 
 	addStatusChangeListener(listener: StatusChangeListener) {
 		this.statusChangeListeners.push(listener);

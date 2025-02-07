@@ -23,13 +23,18 @@ export const appRouter = t.router({
     return ctx.tylersThings.dailyPlans.getToday();
   }),
 
-  createToday: t.procedure
-    .input(z.object({ text: z.string() }))
+  getPlanByDay: t.procedure
+    .input(z.object({ date: z.string() }))
+    .query(async ({ input, ctx }) => {
+      return ctx.tylersThings.dailyPlans.getPlanByDay(new Date(input.date));
+    }),
+
+  createPlan: t.procedure
+    .input(z.object({ text: z.string(), day: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      const today = getCurrentDayBoundary();
       return ctx.tylersThings.dailyPlans.createPlan({
-        day: today.toISOString(),
         text: input.text,
+        day: input.day,
       });
     }),
 
@@ -569,6 +574,31 @@ export const appRouter = t.router({
     .input(z.object({ googleDocId: z.string() }))
     .query(async ({ input, ctx }) => {
       return ctx.tylersThings.googleNotes.getGoogleDocContent(input.googleDocId);
+    }),
+
+  // Time Tracker routes
+  startTimeBlock: t.procedure
+    .input(z.object({ label: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      return ctx.tylersThings.timeTracker.startTimeBlock(input.label);
+    }),
+
+  endTimeBlock: t.procedure
+    .mutation(async ({ ctx }) => {
+      return ctx.tylersThings.timeTracker.endTimeBlock();
+    }),
+
+  getTimeBlocksForDay: t.procedure
+    .input(z.object({
+      date: z.string() // ISO string
+    }))
+    .query(async ({ input, ctx }) => {
+      return ctx.tylersThings.timeTracker.getTimeBlocksForDay(input.date);
+    }),
+
+  getDaysWithNotes: t.procedure
+    .query(async ({ ctx }) => {
+      return ctx.tylersThings.dailyPlans.getDaysWithNotes();
     }),
 });
 

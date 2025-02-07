@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Daily } from './pages/Daily.tsx'
+import { DailyRouter } from './pages/Daily.tsx'
 import { TodoList } from './pages/TodoList.tsx'
 import { BuyList } from './pages/BuyList.tsx'
 import { TalkNotesRouter } from './pages/TalkNotes.tsx'
@@ -56,7 +56,7 @@ function App() {
         />
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/daily" element={<Daily />} />
+          <Route path="/daily/*" element={<DailyRouter />} />
           <Route path="/todos" element={<TodoList />} />
           <Route path="/buy-list" element={<BuyList />} />
           <Route path="/talk-notes/*" element={<TalkNotesRouter />} />
